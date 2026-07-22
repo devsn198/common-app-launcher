@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manifest Maker</title>
+    <style>
+      :root {
+        --bg: #10141d; --panel: #191e2a; --surface: #242c3c; --surface-hi: #2e3750;
+        --text: #e7ebf3; --muted: #8a94a8; --accent: #5b8cff; --accent-weak: rgba(91,140,255,.16);
+        --border: #303950; --ok: #37c98a;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text);
+             font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px 64px; }
+      h1 { font-size: 22px; margin: 0 0 4px; }
+      .lead { color: var(--muted); margin: 0 0 24px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+      @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+      .field { margin-bottom: 14px; }
+      label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+      label .req { color: var(--accent); }
+      label .opt { color: var(--muted); opacity: .7; }
+      input {
+        width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px;
+        background: var(--panel); color: var(--text); font-size: 13px; font-family: inherit;
+      }
+      input:focus { outline: 2px solid var(--accent-weak); border-color: var(--accent); }
+      input.invalid { border-color: #f0655f; }
+
+      .preview { position: sticky; top: 24px; }
+      .preview h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 10px; }
+      pre {
+        margin: 0; background: #0b0e15; border: 1px solid var(--border); border-radius: 10px;
+        padding: 16px; font: 12.5px/1.6 ui-monospace, "SF Mono", Menlo, monospace;
+        color: #c3cbdc; overflow: auto; max-height: 52vh;
+      }
+      .k { color: #7fa8ff; } .s { color: #8fd6a8; } .p { color: #6b7688; }
+      .row { display: flex; gap: 8px; margin-top: 12px; }
+      .btn { padding: 9px 16px; border: 0; border-radius: 8px; background: var(--accent);
+             color: #fff; font-size: 13px; cursor: pointer; }
+      .btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+      .btn:hover { filter: brightness(1.08); }
+      .flash { color: var(--ok); font-size: 12.5px; align-self: center; opacity: 0; transition: opacity .2s; }
+      .flash.show { opacity: 1; }
+      .warn { color: #f0655f; font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Manifest Maker</h1>
+      <p class="lead">Fill in the fields to generate an <code>app.manifest.json</code> for a new app. <span style="color:var(--accent)">*</span> marks required fields.</p>
+
+      <div class="grid">
+        <form id="form" autocomplete="off">
+          <div class="field"><label>id <span class="req">*</span></label><input id="id" placeholder="my-app" value="my-app" data-req></div>
+          <div class="field"><label>name <span class="req">*</span></label><input id="name" placeholder="My App" value="My App" data-req></div>
+          <div class="field"><label>logo <span class="req">*</span> <span class="opt">path to a logo image</span></label><input id="logo" value="logo.svg" data-req></div>
+          <div class="field"><label>install <span class="req">*</span> <span class="opt">run once</span></label><input id="install" value="npm install" data-req></div>
+          <div class="field"><label>start <span class="req">*</span></label><input id="start" value="node server.js" data-req></div>
+          <div class="field"><label>healthCheck <span class="req">*</span> <span class="opt">path, must start with /</span></label><input id="healthCheck" value="/health" data-req></div>
+          <div class="field"><label>description <span class="opt">optional</span></label><input id="description" placeholder="What the app does"></div>
+          <div class="field"><label>version <span class="opt">optional</span></label><input id="version" value="0.1.0"></div>
+          <div class="field"><label>icon <span class="opt">optional emoji</span></label><input id="icon" placeholder="📦"></div>
+          <div class="field"><label>port <span class="opt">optional — the Shell picks it</span></label><input id="port" value="$PORT"></div>
+        </form>
+
+        <div class="preview">
+          <h2>app.manifest.json</h2>
+          <pre id="out"></pre>
+          <div class="row">
+            <button class="btn" id="copy" type="button">Copy</button>
+            <button class="btn ghost" id="download" type="button">Download</button>
+            <span class="flash" id="flash">Copied</span>
+          </div>
+          <div class="warn" id="warn"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const REQUIRED = ['id', 'name', 'logo', 'install', 'start', 'healthCheck'];
+      // field id -> whether optional (only emitted when non-empty)
+      const ORDER = ['id', 'name', 'icon', 'logo', 'description', 'version', 'install', 'start', 'port', 'healthCheck'];
+      const OPTIONAL = new Set(['icon', 'description', 'version', 'port']);
+
+      function build() {
+        const obj = {};
+        for (const key of ORDER) {
+          const v = $(key).value.trim();
+          if (OPTIONAL.has(key) && !v) continue;
+          obj[key] = v;
+        }
+        return obj;
+      }
+
+      function validate() {
+        const warns = [];
+        for (const key of REQUIRED) {
+          const el = $(key);
+          const bad = !el.value.trim();
+          el.classList.toggle('invalid', bad);
+          if (bad) warns.push(`"${key}" is required`);
+        }
+        const id = $('id').value.trim();
+        if (id && !/^[a-z0-9][a-z0-9-]*$/.test(id)) { $('id').classList.add('invalid'); warns.push('"id" must be lowercase letters, digits, hyphens'); }
+        const hc = $('healthCheck').value.trim();
+        if (hc && !hc.startsWith('/')) { $('healthCheck').classList.add('invalid'); warns.push('"healthCheck" must start with "/"'); }
+        $('warn').textContent = warns.length ? '⚠ ' + warns.join(' · ') : '';
+        return warns.length === 0;
+      }
+
+      // Syntax-highlighted JSON for the preview.
+      function render() {
+        validate();
+        const json = JSON.stringify(build(), null, 2);
+        const esc = json.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+        $('out').innerHTML = esc.replace(
+          /("(\\.|[^"\\])*")(\s*:)?/g,
+          (m, str, _c, colon) => colon ? `<span class="k">${str}</span>${colon}` : `<span class="s">${str}</span>`
+        );
+      }
+
+      function flash() { const f = $('flash'); f.classList.add('show'); setTimeout(() => f.classList.remove('show'), 1200); }
+
+      $('copy').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(JSON.stringify(build(), null, 2)); flash(); } catch {}
+      });
+      $('download').addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(build(), null, 2) + '\n'], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'app.manifest.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      $('form').addEventListener('input', render);
+      render();
+    </script>
+  </body>
+</html>

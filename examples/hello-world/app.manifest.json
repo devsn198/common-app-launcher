@@ -1,0 +1,12 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "icon": "👋",
+  "logo": "logo.svg",
+  "description": "A trivial reference app that proves the Contract.",
+  "version": "0.1.0",
+  "install": "true",
+  "start": "node server.js",
+  "port": "$PORT",
+  "healthCheck": "/health"
+}

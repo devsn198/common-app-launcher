@@ -1,0 +1,11 @@
+{
+  "id": "clock",
+  "name": "Clock",
+  "logo": "logo.svg",
+  "description": "A live clock — second demo app.",
+  "version": "0.1.0",
+  "install": "true",
+  "start": "node server.js",
+  "port": "$PORT",
+  "healthCheck": "/health"
+}
