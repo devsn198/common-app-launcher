@@ -1,0 +1,14 @@
+{
+  "name": "common-app-shell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Launcher shell that hosts apps as tabs (Common App Framework MVP)",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "http-proxy-middleware": "^3.0.3"
+  }
+}
