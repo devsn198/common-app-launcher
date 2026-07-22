@@ -25,7 +25,7 @@ covers the Shell + Contract, with the Store built as the reference app that prov
                           ┌─────────────────────────────────────┐
         Browser  ◄──────► │              SHELL (Node/TS)          │
      (single web UI)      │                                       │
-                          │  • Serves web UI + generic renderer   │
+                          │  • Serves launcher UI (tab chrome)    │
                           │  • Tab bar + tab lifecycle            │
                           │  • Subprocess supervisor              │
                           │  • Proxy: /apps/<id>/* → subprocess   │
@@ -60,6 +60,7 @@ Each app repo has an `app.manifest.json` at its root:
   "id": "store",
   "name": "Mini Store",
   "icon": "🛍️",
+  "logo": "logo.svg",
   "description": "Browse and install apps from GitHub",
   "version": "0.1.0",
   "install": "npm install",
@@ -69,9 +70,15 @@ Each app repo has an `app.manifest.json` at its root:
 }
 ```
 
+Required fields: `id`, `name`, `logo`, `install`, `start`, `healthCheck`. The rest are optional.
+
 Field semantics:
 - `id` — unique, stable, URL-safe. Used in proxy paths (`/apps/<id>/*`) and as the registry key.
-- `name`, `icon`, `description`, `version` — display metadata for the tab and Store listing.
+- `logo` — path (relative to the app root) to a logo image the app serves; the Shell renders it in the
+  app's rail tile via the proxy (`/apps/<id>/<logo>`), falling back to a name monogram if it fails to
+  load. **Required.**
+- `name`, `icon`, `description`, `version` — display metadata for the tab and Store listing (`icon` is
+  an optional emoji; the tile prefers `logo`).
 - `install` — shell command run **once** at install time, in the app's directory (e.g.
   `pip install -r requirements.txt`, `npm install`, `go build`). Explicitly declared, **not**
   auto-detected by the Shell — this is what makes the framework language-agnostic without the Shell
@@ -92,11 +99,9 @@ When the Shell spawns an app it injects environment variables:
 ### 3.3 App-side HTTP API the app must expose
 
 - `GET <healthCheck>` → 2xx once ready.
-- `GET /ui` → the app's declarative UI JSON for its default screen (see §4). This is what the Shell
-  requests to render the tab.
-- Action endpoints — arbitrary app-defined routes that declarative UI actions point at (form submits,
-  button clicks). They return either a new declarative UI JSON screen or a result the renderer can
-  apply.
+- `GET /` → the app's own web UI (HTML/JS/CSS). The Shell proxies this and embeds it in the app's tab
+  as an iframe (see §4). Everything else the app serves (assets, action endpoints) is the app's own
+  business — the Shell just proxies `/apps/<id>/*` through to it.
 
 ### 3.4 Shell-side Contract endpoints the app may call
 
@@ -107,36 +112,28 @@ When the Shell spawns an app it injects environment variables:
 - `GET /shell/apps` — list currently installed/registered apps (so the Store can show installed
   state without keeping its own database).
 
-## 4. UI Generation (Hybrid)
+## 4. UI Generation (Iframe-first)
 
-**Default — declarative JSON.** An app's `/ui` (and action endpoints) return a JSON description of a
-screen built from a fixed component vocabulary the Shell's generic renderer knows how to draw. Actions
-carry the app endpoint to call. Illustrative shape:
+**Each app owns its UI.** An app serves its own web frontend at `/`; the Shell spawns the app, proxies
+`/apps/<id>/*` to it, and embeds that UI in the app's tab as an iframe. The Shell renders no app UI
+itself — it provides only the tab chrome (tab bar, status, crash/restart states). The Contract's UI
+obligation is therefore minimal: *serve a web UI + a health check.*
 
-```json
-{
-  "title": "Installed Apps",
-  "components": [
-    { "type": "text", "value": "Apps available from your GitHub" },
-    { "type": "table",
-      "columns": ["Name", "Description", "Installed"],
-      "rows": [["Notes", "A notes app", "No"]],
-      "rowActions": [{ "label": "Install", "endpoint": "/install", "method": "POST" }] },
-    { "type": "form",
-      "endpoint": "/add-source", "method": "POST",
-      "fields": [{ "name": "repo", "label": "Repo URL", "type": "text" }],
-      "submitLabel": "Add" }
-  ]
-}
-```
+Because an app's iframe is served through the Shell's own origin (`/apps/<id>/`), the app's own
+`fetch('/shell/...')` calls reach the Shell directly — no CORS or cross-origin setup.
 
-Initial component vocabulary (grown over time as apps need more): `text`, `table` (with row actions),
-`form` (text/number/select/checkbox/file fields), `button`, `list`. The vocabulary is a versioned,
-documented part of the Contract.
+**Iframe caveat.** App assets are mounted under `/apps/<id>/`, so apps should use **relative** asset
+paths (or set a `<base>`), not absolute `/`-rooted ones.
 
-**Escape hatch — raw HTML.** An app may designate a route that returns raw HTML/JS instead of
-declarative JSON; the Shell embeds it in an iframe for that one screen. This is the exception for
-screens the vocabulary can't express (e.g. a custom chart), not the default path.
+> **Design note (2026-07-21): declarative-JSON UI dropped.** An earlier draft made the *default* UI
+> path a generic declarative-JSON renderer in the Shell (a versioned component vocabulary — `text`,
+> `table`, `form`, …) so a backend-only app could get "a UI for free," with raw-HTML-in-an-iframe as
+> an escape hatch. Since every app supplies its own UI in practice, that sole justification
+> disappears and only cost remains (a Shell-owned vocabulary to version as part of the Contract, a
+> renderer, an action round-trip protocol — whose own fallback was already the iframe). The escape
+> hatch *is* the model. If visual consistency across apps is ever wanted, the tool is an **opt-in
+> shared CSS/template kit** that apps import — not a renderer baked into the Shell — which can be
+> added later with zero Contract changes.
 
 ## 5. The Store (Reference App)
 
@@ -146,8 +143,8 @@ prove the Contract is complete and ergonomic.
 - **Discovery:** lists GitHub repos via the GitHub API and checks each for `app.manifest.json` at the
   root (default mode). Alternatively reads a **curated registry file** (a JSON list of repos +
   metadata) when the user prefers a curated catalog. Both modes feed the same install flow.
-- **Listing:** renders repos as a declarative `table` (name, description, installed y/n) with an
-  Install row action. Installed state comes from `GET /shell/apps`.
+- **Listing:** renders repos in its own HTML page (name, description, installed y/n) with an Install
+  control per repo. Installed state comes from `GET /shell/apps`.
 - **Install:** clones the repo into a Shell-managed apps directory, runs the manifest's `install`
   command, then calls `POST /shell/tabs` to register it.
 - **No local persistence:** the Shell's registry is the source of truth for what's installed, so a
@@ -155,8 +152,8 @@ prove the Contract is complete and ergonomic.
 
 ## 6. Data Flow — Installing an App End to End
 
-1. Browser opens the Store tab → Shell proxies to Store subprocess → Store returns declarative UI.
-2. Store fetches repo list (GitHub API / registry file) and renders the table.
+1. Browser opens the Store tab → Shell proxies to Store subprocess → Store returns its HTML page.
+2. Store fetches repo list (GitHub API / registry file) and renders the list.
 3. User clicks **Install** on a repo → browser posts the action to the Shell → Shell proxies to the
    Store's `/install`.
 4. Store clones the repo locally and runs the manifest's `install` command.
@@ -185,21 +182,20 @@ health-checks each app, rebuilding the tab bar. Per-app data lives under each ap
 Because the Store *is* the reference app, the end-to-end acceptance test is: **use the Store to
 install a trivial "hello world" app from a GitHub repo and see it appear as a working tab.** That one
 flow exercises the entire Contract — manifest parsing, dependency install, subprocess spawn, env
-injection, health check, declarative UI render, action proxying, and tab registration. Supporting
-checks:
+injection, health check, UI proxying into an iframe tab, and tab registration. Supporting checks:
 - Kill a running app's process → its tab shows "crashed" + Restart; other tabs stay live.
 - Restart the Shell → previously installed apps reappear as tabs from the registry.
-- An app using the raw-HTML escape hatch renders correctly in its iframe screen.
+- An installed app's own web UI renders correctly in its iframe tab (relative asset paths work).
 
 ## 10. Locked Decisions
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Shell form | Local web app | Web widgets make generic UI generation easiest; no native packaging burden. |
+| Shell form | Local web app | Iframed app UIs, no native packaging burden. |
 | Process model | One subprocess per app | Dependency isolation; a crash is contained; matches "install requirements" literally. |
-| Shell language | Node.js/TypeScript | Strong async I/O for supervising/streaming many subprocesses; shared JS for the renderer. |
+| Shell language | Node.js/TypeScript | Strong async I/O for supervising/streaming many subprocesses. |
 | App language | Language-agnostic | Manifest declares explicit install/start commands; Shell needs no per-language knowledge. |
-| UI generation | Hybrid (declarative + raw-HTML escape hatch) | Zero-frontend default, with an exit for screens the vocabulary can't express. |
+| UI generation | Iframe-first (each app owns its UI) | Every app supplies its own frontend anyway; a Shell-side declarative renderer would be pure overhead (see §4 design note). |
 | Store privileges | None | Tab registration is a normal Contract endpoint any app can call; keeps one contract tier. |
 | App discovery | Manifest scan (default) + curated registry (opt-in) | Zero-maintenance default, with a curated catalog when wanted. |
 
