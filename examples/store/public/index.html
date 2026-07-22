@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Store</title>
+    <style>
+      :root {
+        --bg: #10141d;
+        --panel: #191e2a;
+        --surface: #242c3c;
+        --surface-hi: #2e3750;
+        --text: #e7ebf3;
+        --muted: #8a94a8;
+        --accent: #5b8cff;
+        --accent-weak: rgba(91, 140, 255, 0.16);
+        --border: #303950;
+        --ok: #37c98a;
+        --bad: #f0655f;
+        --warn: #e6ab4b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--bg); color: var(--text);
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 64px; }
+      h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: 0.2px; }
+      .lead { color: var(--muted); margin: 0 0 24px; }
+
+      .search { display: flex; gap: 8px; }
+      .search input {
+        flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+        background: var(--panel); color: var(--text); font-size: 14px;
+      }
+      .search input:focus { outline: 2px solid var(--accent-weak); border-color: var(--accent); }
+      .search button {
+        padding: 12px 20px; border: 0; border-radius: 10px; background: var(--accent);
+        color: #fff; font-size: 14px; cursor: pointer;
+      }
+      .search button:disabled { opacity: .6; cursor: default; }
+      .hint { color: var(--muted); font-size: 12.5px; margin: 8px 2px 0; }
+
+      h2.section {
+        font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px;
+        color: var(--muted); margin: 32px 2px 12px; font-weight: 600;
+      }
+
+      .card {
+        display: flex; align-items: center; gap: 14px;
+        background: var(--panel); border: 1px solid var(--border);
+        border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+      }
+      .mono {
+        flex: 0 0 auto; width: 40px; height: 40px; border-radius: 11px;
+        background: var(--surface); display: grid; place-items: center;
+        font-weight: 600; font-size: 16px; color: var(--muted);
+      }
+      .mono img { width: 24px; height: 24px; object-fit: contain; }
+      .card .meta { flex: 1 1 auto; min-width: 0; }
+      .card .name { font-weight: 600; }
+      .card .desc { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .card .act { flex: 0 0 auto; }
+
+      .btn {
+        padding: 8px 16px; border: 0; border-radius: 9px; background: var(--accent);
+        color: #fff; font-size: 13px; cursor: pointer;
+      }
+      .btn:hover { filter: brightness(1.08); }
+      .btn:disabled { opacity: .6; cursor: default; }
+      .btn.added { background: var(--surface-hi); color: var(--muted); cursor: default; }
+
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+      .dot.healthy { background: var(--ok); }
+      .dot.crashed, .dot.failed { background: var(--bad); }
+      .dot.starting { background: var(--warn); }
+
+      .note { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+      .note.err { color: var(--bad); }
+      .note.ok { color: var(--ok); }
+      .empty-row { color: var(--muted); font-size: 13px; padding: 4px 2px; }
+      .spinner { color: var(--muted); font-size: 13px; padding: 8px 2px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Store</h1>
+      <p class="lead">Search a GitHub account for all its apps, or paste a single repo URL to add it directly.</p>
+
+      <form class="search" id="searchForm">
+        <input id="user" placeholder="Account or repo URL — e.g. github.com/you  or  github.com/you/app" autocomplete="off" spellcheck="false" />
+        <button id="searchBtn" type="submit">Go</button>
+      </form>
+      <p class="hint">An <strong>account</strong> lists all public repos with an <code>app.manifest.json</code> (unauthenticated, ~60 lookups/hour). A <strong>repo URL</strong> (or local path) is added directly.</p>
+
+      <h2 class="section">Available apps</h2>
+      <div id="results"><p class="empty-row">Search a GitHub account to see its apps.</p></div>
+
+      <h2 class="section">Added apps</h2>
+      <div id="installed"><p class="empty-row">Loading…</p></div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const results = $('results');
+      const installedEl = $('installed');
+      let installedIds = new Set();
+
+      const mono = (s) => (s || '?').trim().charAt(0).toUpperCase() || '?';
+
+      // Decide whether the input is a GitHub *account* (search all its apps) or a
+      // single *repo* (add it directly). Also accepts non-GitHub git URLs / local paths.
+      function classify(input) {
+        const s = input.trim().replace(/^@/, '').replace(/\/+$/, '');
+        if (!s) return null;
+        const i = s.toLowerCase().indexOf('github.com');
+        if (i !== -1) {
+          const segs = s.slice(i + 'github.com'.length).replace(/^[/:]+/, '').split(/[/#?]/).filter(Boolean);
+          const user = segs[0];
+          const repo = segs[1] && segs[1].replace(/\.git$/i, '');
+          if (user && repo) return { type: 'repo', url: `https://github.com/${user}/${repo}.git`, label: `${user}/${repo}` };
+          if (user) return { type: 'account', user };
+          return null;
+        }
+        // No github.com: a full git URL / ssh / local path → add directly; else a bare username.
+        if (/^https?:\/\/|^git@|^ssh:\/\/|^file:\/\//i.test(s) || /^[/.]/.test(s) || /\.git$/i.test(s)) {
+          return { type: 'repo', url: s, label: s };
+        }
+        return { type: 'account', user: s.split(/[/#?]/)[0] };
+      }
+
+      async function loadInstalled() {
+        try {
+          const res = await fetch('/shell/apps');
+          const { apps } = await res.json();
+          const list = apps.filter((a) => a.id !== 'store');
+          installedIds = new Set(list.map((a) => a.id));
+          if (!list.length) {
+            installedEl.innerHTML = '<p class="empty-row">No apps added yet.</p>';
+            return;
+          }
+          installedEl.innerHTML = list.map((a) => `
+            <div class="card">
+              <div class="mono">${a.logo
+                ? `<img src="/apps/${a.id}/${String(a.logo).replace(/^\/+/, '')}" alt="" onerror="this.replaceWith(document.createTextNode('${mono(a.name)}'))">`
+                : mono(a.name)}</div>
+              <div class="meta">
+                <div class="name">${escapeHtml(a.name)}</div>
+                <div class="desc"><span class="dot ${a.status}"></span> ${a.status}${a.version ? ' · v' + escapeHtml(a.version) : ''}</div>
+              </div>
+            </div>`).join('');
+        } catch (e) {
+          installedEl.innerHTML = '<p class="note err">Could not load installed apps.</p>';
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      // Detect app.manifest.json via raw (not counted against the API rate limit).
+      async function fetchManifest(user, repo, branch) {
+        const url = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/app.manifest.json`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return null;
+          return await res.json();
+        } catch { return null; }
+      }
+
+      async function search(user) {
+        results.innerHTML = '<p class="spinner">Searching…</p>';
+        let repos;
+        try {
+          const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`);
+          if (res.status === 404) { results.innerHTML = `<p class="note err">No GitHub account “${escapeHtml(user)}”.</p>`; return; }
+          if (res.status === 403) { results.innerHTML = '<p class="note err">GitHub rate limit reached. Try again later.</p>'; return; }
+          if (!res.ok) { results.innerHTML = `<p class="note err">GitHub error (${res.status}).</p>`; return; }
+          repos = await res.json();
+        } catch (e) {
+          results.innerHTML = '<p class="note err">Could not reach GitHub.</p>';
+          return;
+        }
+
+        const scanned = repos.slice(0, 40);
+        results.innerHTML = `<p class="spinner">Scanning ${scanned.length} repos for apps…</p>`;
+
+        const found = (await Promise.all(scanned.map(async (r) => {
+          const manifest = await fetchManifest(user, r.name, r.default_branch || 'HEAD');
+          if (!manifest || !manifest.id) return null;
+          return { repo: r, manifest };
+        }))).filter(Boolean);
+
+        if (!found.length) {
+          results.innerHTML = `<p class="note">No apps found in ${scanned.length} repos (looked for <code>app.manifest.json</code> at the root).</p>`;
+          return;
+        }
+
+        results.innerHTML = found.map(({ repo, manifest }, i) => {
+          const added = installedIds.has(manifest.id);
+          const cloneUrl = repo.clone_url || `https://github.com/${user}/${repo.name}.git`;
+          return `
+            <div class="card" data-i="${i}">
+              <div class="mono">${mono(manifest.name)}</div>
+              <div class="meta">
+                <div class="name">${escapeHtml(manifest.name || repo.name)}</div>
+                <div class="desc">${escapeHtml(manifest.description || repo.description || repo.full_name)}</div>
+              </div>
+              <div class="act">
+                <button class="btn ${added ? 'added' : ''}" data-url="${escapeHtml(cloneUrl)}" ${added ? 'disabled' : ''}>
+                  ${added ? 'Added' : 'Add'}
+                </button>
+              </div>
+            </div>`;
+        }).join('');
+
+        results.querySelectorAll('button.btn').forEach((btn) => {
+          if (btn.classList.contains('added')) return;
+          btn.addEventListener('click', () => addApp(btn));
+        });
+      }
+
+      async function addApp(btn) {
+        const repoUrl = btn.dataset.url;
+        btn.disabled = true;
+        btn.textContent = 'Adding…';
+        try {
+          const res = await fetch('/shell/install', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repoUrl }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            btn.textContent = 'Added';
+            btn.classList.add('added');
+            window.parent.postMessage('shell:refresh', '*'); // update the rail
+            await loadInstalled();
+          } else {
+            btn.disabled = false;
+            btn.textContent = 'Add';
+            alert(data.error || 'Install failed.');
+          }
+        } catch (e) {
+          btn.disabled = false;
+          btn.textContent = 'Add';
+          alert('Request failed: ' + e.message);
+        }
+      }
+
+      // Add a single repo directly by its URL (or local path).
+      async function importDirect(url, label) {
+        results.innerHTML = `<p class="spinner">Adding ${escapeHtml(label)}…</p>`;
+        try {
+          const res = await fetch('/shell/install', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repoUrl: url }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            results.innerHTML = `<p class="note ok">Added “${escapeHtml(data.app.name)}” — it's now in your rail.</p>`;
+            window.parent.postMessage('shell:refresh', '*');
+            await loadInstalled();
+          } else {
+            results.innerHTML = `<p class="note err">${escapeHtml(data.error || 'Install failed.')}</p>`;
+          }
+        } catch (e) {
+          results.innerHTML = `<p class="note err">Request failed: ${escapeHtml(e.message)}</p>`;
+        }
+      }
+
+      $('searchForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const c = classify($('user').value);
+        if (!c) return;
+        if (c.type === 'account') search(c.user);
+        else importDirect(c.url, c.label);
+      });
+
+      loadInstalled();
+    </script>
+  </body>
+</html>

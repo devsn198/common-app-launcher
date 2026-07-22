@@ -1,0 +1,12 @@
+{
+  "id": "store",
+  "name": "Store",
+  "icon": "🛍️",
+  "logo": "logo.svg",
+  "description": "Install apps from a git URL.",
+  "version": "0.1.0",
+  "install": "true",
+  "start": "node server.js",
+  "port": "$PORT",
+  "healthCheck": "/health"
+}
