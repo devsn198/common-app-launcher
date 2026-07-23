@@ -1,6 +1,10 @@
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const PORT = process.env.PORT || 3000;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const page = `<!doctype html>
 <html>
@@ -29,8 +33,6 @@ const page = `<!doctype html>
   </body>
 </html>`;
 
-const logoSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5b8cff" stroke-width="2"/><path d="M12 7.5v5l3.5 2" stroke="#e7ebf3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
 http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -38,7 +40,7 @@ http.createServer((req, res) => {
   }
   if (req.url === '/logo.svg') {
     res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
-    return res.end(logoSvg);
+    return res.end(fs.readFileSync(path.join(__dirname, 'logo.svg')));
   }
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
   res.end(page);
