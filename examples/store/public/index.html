@@ -4,25 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Store</title>
+    <!-- The launcher's design system. Apps are proxied onto the Shell's origin,
+         so this absolute path resolves even from inside the iframe. Adopting it
+         is how an app inherits the look instead of copying the palette. -->
+    <link rel="stylesheet" href="/theme.css" />
     <style>
-      :root {
-        --bg: #10141d;
-        --panel: #191e2a;
-        --surface: #242c3c;
-        --surface-hi: #2e3750;
-        --text: #e7ebf3;
-        --muted: #8a94a8;
-        --accent: #5b8cff;
-        --accent-weak: rgba(91, 140, 255, 0.16);
-        --border: #303950;
-        --ok: #37c98a;
-        --bad: #f0655f;
-        --warn: #e6ab4b;
-      }
       * { box-sizing: border-box; }
       body {
-        margin: 0; background: var(--bg); color: var(--text);
-        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        margin: 0; background: var(--s-0); color: var(--text);
+        font: var(--fs-md) / var(--lh) var(--font-ui);
+        -webkit-font-smoothing: antialiased;
       }
       .wrap { max-width: 880px; margin: 0 auto; padding: 36px 24px 64px; }
       h1 { font-size: 20px; margin: 0 0 18px; letter-spacing: 0.2px; font-weight: 650; }

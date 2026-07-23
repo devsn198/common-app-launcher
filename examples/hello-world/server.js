@@ -22,13 +22,18 @@ try {
 const page = `<!doctype html>
 <html>
   <head><meta charset="utf-8" /><title>Hello World</title>
+    <link rel="stylesheet" href="/theme.css" />
     <style>
-      body { font: 16px system-ui; display: grid; place-content: center; height: 100vh;
-             margin: 0; background: #f6f8fc; color: #1a2233; text-align: center; }
-      .card { background: #fff; padding: 40px 56px; border-radius: 16px;
-              box-shadow: 0 10px 40px rgba(20,40,80,.08); }
-      h1 { margin: 0 0 6px; } p { color: #6b7688; margin: 4px 0; }
-      code { background: #eef1f7; padding: 2px 6px; border-radius: 5px; }
+      body { font: var(--fs-lg) var(--font-ui); display: grid; place-content: center; height: 100vh;
+             margin: 0; background: var(--s-0); color: var(--text); text-align: center; }
+      /* Raised the same way the launcher's tiles are: rim light + ambient. */
+      .card { background: var(--s-1); padding: var(--sp-6) 56px; border-radius: var(--r-lg);
+              border: 1px solid var(--line);
+              box-shadow: var(--depth-rest), var(--elev-ambient); }
+      h1 { margin: 0 0 6px; font-size: var(--fs-xl); }
+      p { color: var(--muted); margin: var(--sp-1) 0; }
+      code { background: var(--s-sunken); color: var(--text); padding: 2px 6px;
+             border-radius: var(--r-sm); font: var(--fs-sm) var(--font-mono); }
     </style>
   </head>
   <body>

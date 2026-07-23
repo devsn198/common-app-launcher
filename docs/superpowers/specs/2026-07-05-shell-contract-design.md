@@ -112,6 +112,37 @@ When the Shell spawns an app it injects environment variables:
 - `GET /shell/apps` — list currently installed/registered apps (so the Store can show installed
   state without keeping its own database).
 
+### 3.5 Shared theme (optional affordance)
+
+> Added 2026-07-23. Design decision: one source of truth for the launcher's look.
+
+The Shell serves its design tokens at **`GET /theme.css`**. Because apps are reverse-proxied onto the
+Shell's own origin — an iframe at `/apps/<id>/` is still `localhost:4000` — an app adopts the entire
+visual system with one line:
+
+```html
+<link rel="stylesheet" href="/theme.css" />
+```
+
+This is **optional**. An app that omits it is unaffected and keeps full control of its own look; the
+Shell never imposes styling on app content. Apps that adopt it inherit surfaces (`--s-0`…`--s-3`),
+depth primitives (`--rim`, `--under`, `--depth-rest`, `--depth-raised`), ink, status colours, the type
+and spacing scales, and the motion curve.
+
+Two rules govern the system, and they matter more than any individual value:
+
+1. **Depth comes from light, not shadow.** On `#10141d` a dark drop shadow is invisible — there is no
+   luminance left to darken. Raised surfaces get a rim highlight on top and a dark under-edge
+   (`--depth-rest` / `--depth-raised`); shadows only ground an element that is already lifted.
+2. **The accent signals state, never decoration.** `--accent` marks the active tab, focus, and the
+   primary action in a view. Using it ornamentally is what makes an interface read as a brochure
+   rather than an instrument.
+
+*Constraint:* the path is absolute, so it resolves only when the app is running behind the Shell. An
+app launched standalone (`node server.js` on its own port) will 404 that request and fall back to
+browser defaults. This is deliberate — shipping fallback copies of the tokens into each app is exactly
+the duplication this endpoint removes. The tokens live in `shell/public/theme.css`.
+
 ## 4. UI Generation (Iframe-first)
 
 **Each app owns its UI.** An app serves its own web frontend at `/`; the Shell spawns the app, proxies

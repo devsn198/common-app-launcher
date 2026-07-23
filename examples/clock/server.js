@@ -9,11 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const page = `<!doctype html>
 <html>
   <head><meta charset="utf-8" /><title>Clock</title>
+    <link rel="stylesheet" href="/theme.css" />
     <style>
       body { margin: 0; height: 100vh; display: grid; place-content: center;
-             background: #10141d; color: #e7ebf3; font: 16px system-ui; text-align: center; }
+             background: var(--s-0); color: var(--text); font: var(--fs-lg) var(--font-ui); text-align: center; }
       #t { font-size: 64px; font-weight: 700; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
-      #d { color: #8a94a8; margin-top: 8px; }
+      #d { color: var(--muted); margin-top: 8px; }
     </style>
   </head>
   <body>
