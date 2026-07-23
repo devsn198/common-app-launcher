@@ -76,14 +76,14 @@
       .dot.crashed, .dot.failed { background: var(--bad); }
       .dot.starting, .dot.unhealthy { background: var(--warn); }
 
+      /* Selection is carried by the card itself — border plus a tinted fill is
+         unambiguous at this size, so a checkbox would only add clutter. */
       #installed.selecting .card { cursor: pointer; }
-      .card.selected { border-color: var(--accent); background: var(--accent-weak); }
-      .check {
-        flex: 0 0 auto; width: 19px; height: 19px; border-radius: 6px;
-        border: 1.5px solid var(--border); display: grid; place-items: center;
-        color: #fff; font-size: 11px; line-height: 1;
+      .card.selected {
+        border-color: var(--accent);
+        background: var(--accent-weak);
+        box-shadow: inset 0 0 0 1px var(--accent-line);
       }
-      .card.selected .check { background: var(--accent); border-color: var(--accent); }
 
       .note { color: var(--muted); font-size: 13px; padding: 4px 2px; }
       .note.err { color: var(--bad); }
@@ -151,22 +151,24 @@
       // The shell reuses one iframe for every tab, so leaving the Store and
       // coming back reloads this page. Keep the query + results so the user
       // doesn't have to re-type the URL (and we don't re-spend rate limit).
+      // The typed query is kept independently of any results: pasting a repo URL
+      // and adding it directly never produces a result set, but the URL is still
+      // what the user would expect to find waiting when they come back.
       function persist() {
         try {
-          if (view && view.apps) {
-            localStorage.setItem(LS_KEY, JSON.stringify({ q: $('user').value, view }));
-          } else {
-            localStorage.removeItem(LS_KEY);
-          }
+          const q = $('user').value;
+          const payload = { q, view: view && view.apps ? view : null };
+          if (!q && !payload.view) localStorage.removeItem(LS_KEY);
+          else localStorage.setItem(LS_KEY, JSON.stringify(payload));
         } catch {}
       }
 
       function restore() {
         try {
           const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-          if (!saved || !saved.view || !Array.isArray(saved.view.apps)) return;
+          if (!saved) return;
           $('user').value = saved.q || '';
-          view = saved.view;
+          if (saved.view && Array.isArray(saved.view.apps)) view = saved.view;
         } catch {}
       }
 
@@ -420,7 +422,6 @@
             : a.status;
           return `
             <div class="card${sel ? ' selected' : ''}" data-id="${a.id}">
-              ${selectMode ? `<div class="check">${sel ? '✓' : ''}</div>` : ''}
               <div class="ico">${iconHtml(src, a.name)}</div>
               <div class="meta">
                 <div class="nm">${escapeHtml(a.name)}</div>
@@ -476,6 +477,10 @@
         window.parent.postMessage('shell:refresh', '*'); // update the rail
         await loadInstalled();
       });
+
+      // Persist as the user types, so a pasted URL survives leaving the tab even
+      // if they never pressed Go.
+      $('user').addEventListener('input', persist);
 
       restore();
       renderResults();
