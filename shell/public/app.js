@@ -140,8 +140,9 @@ function showStatus(app) {
 
 function renderStage() {
   if (settingsOpen) {
+    // Hide the frame but keep its `src`: tearing it down would reload the app
+    // (and lose its in-page state) every time the user peeks at Settings.
     frame.hidden = true;
-    frame.removeAttribute('src');
     statusPane.hidden = true;
     emptyEl.hidden = true;
     settingsPane.hidden = false;

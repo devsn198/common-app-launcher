@@ -24,120 +24,163 @@
         margin: 0; background: var(--bg); color: var(--text);
         font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       }
-      .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 64px; }
-      h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: 0.2px; }
-      .lead { color: var(--muted); margin: 0 0 24px; }
+      .wrap { max-width: 880px; margin: 0 auto; padding: 36px 24px 64px; }
+      h1 { font-size: 20px; margin: 0 0 18px; letter-spacing: 0.2px; font-weight: 650; }
 
       .search { display: flex; gap: 8px; }
       .search input {
-        flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
-        background: var(--panel); color: var(--text); font-size: 14px;
+        flex: 1; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+        background: var(--panel); color: var(--text); font-size: 13.5px;
       }
+      .search input::placeholder { color: var(--muted); }
       .search input:focus { outline: 2px solid var(--accent-weak); border-color: var(--accent); }
       .search button {
-        padding: 12px 20px; border: 0; border-radius: 10px; background: var(--accent);
-        color: #fff; font-size: 14px; cursor: pointer;
+        padding: 11px 20px; border: 0; border-radius: 10px; background: var(--accent);
+        color: #fff; font-size: 13.5px; cursor: pointer;
       }
-      .search button:disabled { opacity: .6; cursor: default; }
-      .hint { color: var(--muted); font-size: 12.5px; margin: 8px 2px 0; }
+      .search button:hover { filter: brightness(1.08); }
 
-      h2.section {
-        font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px;
-        color: var(--muted); margin: 32px 2px 12px; font-weight: 600;
+      /* Section header: label on the left, count / controls on the right. */
+      .shead { display: flex; align-items: center; gap: 10px; margin: 30px 2px 12px; }
+      .shead h2 {
+        font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px;
+        color: var(--muted); margin: 0; font-weight: 600;
       }
+      .shead .cnt { color: var(--muted); font-size: 12px; }
+      .shead .sp { flex: 1 1 auto; }
+
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 10px; }
 
       .card {
-        display: flex; align-items: center; gap: 14px;
+        display: flex; align-items: center; gap: 12px;
         background: var(--panel); border: 1px solid var(--border);
-        border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+        border-radius: 12px; padding: 11px 12px; min-width: 0;
+        transition: border-color .14s ease, background .14s ease;
       }
-      .mono {
-        flex: 0 0 auto; width: 40px; height: 40px; border-radius: 11px;
-        background: var(--surface); display: grid; place-items: center;
-        font-weight: 600; font-size: 16px; color: var(--muted);
+      .card:hover { border-color: var(--surface-hi); }
+      .ico {
+        flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px;
+        background: var(--surface); display: grid; place-items: center; overflow: hidden;
+        font-weight: 600; font-size: 15px; color: var(--muted);
       }
-      .mono img { width: 24px; height: 24px; object-fit: contain; }
-      .card .meta { flex: 1 1 auto; min-width: 0; }
-      .card .name { font-weight: 600; }
-      .card .desc { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .card .act { flex: 0 0 auto; }
+      .ico img { width: 22px; height: 22px; object-fit: contain; }
+      .meta { flex: 1 1 auto; min-width: 0; }
+      .nm { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sb { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sb .dot { margin-right: 5px; }
 
       .btn {
-        padding: 8px 16px; border: 0; border-radius: 9px; background: var(--accent);
-        color: #fff; font-size: 13px; cursor: pointer;
+        padding: 7px 14px; border: 0; border-radius: 9px; background: var(--accent);
+        color: #fff; font-size: 12.5px; cursor: pointer; flex: 0 0 auto;
       }
       .btn:hover { filter: brightness(1.08); }
       .btn:disabled { opacity: .6; cursor: default; }
       .btn.added { background: var(--surface-hi); color: var(--muted); cursor: default; }
-
-      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
-      .dot.healthy { background: var(--ok); }
-      .dot.crashed, .dot.failed { background: var(--bad); }
-      .dot.starting { background: var(--warn); }
-
       .btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
       .btn.ghost:hover { background: var(--surface-hi); filter: none; }
       .btn.danger { background: var(--bad); color: #fff; }
-      .btn.small { padding: 6px 13px; font-size: 12.5px; }
+      .btn.small { padding: 6px 13px; font-size: 12px; }
 
-      .section-head { display: flex; align-items: center; justify-content: space-between; margin: 32px 2px 12px; }
-      .section-head .section { margin: 0; }
-      .sel-controls { display: flex; gap: 8px; }
+      .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
+      .dot.healthy { background: var(--ok); }
+      .dot.crashed, .dot.failed { background: var(--bad); }
+      .dot.starting, .dot.unhealthy { background: var(--warn); }
 
       #installed.selecting .card { cursor: pointer; }
-      #installed.selecting .card:hover { border-color: var(--surface-hi); }
       .card.selected { border-color: var(--accent); background: var(--accent-weak); }
       .check {
-        flex: 0 0 auto; width: 20px; height: 20px; border-radius: 6px;
+        flex: 0 0 auto; width: 19px; height: 19px; border-radius: 6px;
         border: 1.5px solid var(--border); display: grid; place-items: center;
-        color: #fff; font-size: 12px; line-height: 1;
+        color: #fff; font-size: 11px; line-height: 1;
       }
       .card.selected .check { background: var(--accent); border-color: var(--accent); }
 
-      .note { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+      .note { color: var(--muted); font-size: 13px; padding: 4px 2px; }
       .note.err { color: var(--bad); }
       .note.ok { color: var(--ok); }
-      .empty-row { color: var(--muted); font-size: 13px; padding: 4px 2px; }
-      .spinner { color: var(--muted); font-size: 13px; padding: 8px 2px; }
     </style>
   </head>
   <body>
     <div class="wrap">
       <h1>Store</h1>
-      <p class="lead">Search a GitHub account for all its apps, or paste a single repo URL to add it directly.</p>
 
       <form class="search" id="searchForm">
-        <input id="user" placeholder="Account or repo URL — e.g. github.com/you  or  github.com/you/app" autocomplete="off" spellcheck="false" />
-        <button id="searchBtn" type="submit">Go</button>
+        <input id="user" placeholder="GitHub account or repo URL" autocomplete="off" spellcheck="false" />
+        <button type="submit">Go</button>
       </form>
-      <p class="hint">An <strong>account</strong> lists all public repos with an <code>app.manifest.json</code> (unauthenticated, ~60 lookups/hour). A <strong>repo URL</strong> (or local path) is added directly.</p>
 
-      <h2 class="section">Available apps</h2>
-      <div id="results"><p class="empty-row">Search a GitHub account to see its apps.</p></div>
+      <section id="availSec" hidden>
+        <div class="shead">
+          <h2>Available</h2>
+          <span class="cnt" id="availCnt"></span>
+        </div>
+        <div id="results"></div>
+      </section>
 
-      <div class="section-head">
-        <h2 class="section">Added apps</h2>
-        <div class="sel-controls">
+      <section>
+        <div class="shead">
+          <h2>Added</h2>
+          <span class="cnt" id="addedCnt"></span>
+          <span class="sp"></span>
           <button id="removeBtn" class="btn danger small" hidden>Remove</button>
           <button id="selectBtn" class="btn ghost small" hidden>Select</button>
         </div>
-      </div>
-      <div id="installed"><p class="empty-row">Loading…</p></div>
+        <div id="installed"></div>
+      </section>
     </div>
 
     <script>
       const $ = (id) => document.getElementById(id);
       const results = $('results');
+      const availSec = $('availSec');
+      const availCnt = $('availCnt');
+      const addedCnt = $('addedCnt');
       const installedEl = $('installed');
       const selectBtn = $('selectBtn');
       const removeBtn = $('removeBtn');
+
+      const LS_KEY = 'store:search';
+
       let installedIds = new Set();
       let installedApps = [];
       let selectMode = false;
       const selected = new Set();
 
+      // The "Available" panel's state. Either a result set ({label, apps}) or a
+      // transient message ({notice}). Result sets are persisted; notices are not.
+      let view = null;
+
       const mono = (s) => (s || '?').trim().charAt(0).toUpperCase() || '?';
 
+      function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      // ── Persistence ────────────────────────────────────────────────────────
+      // The shell reuses one iframe for every tab, so leaving the Store and
+      // coming back reloads this page. Keep the query + results so the user
+      // doesn't have to re-type the URL (and we don't re-spend rate limit).
+      function persist() {
+        try {
+          if (view && view.apps) {
+            localStorage.setItem(LS_KEY, JSON.stringify({ q: $('user').value, view }));
+          } else {
+            localStorage.removeItem(LS_KEY);
+          }
+        } catch {}
+      }
+
+      function restore() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+          if (!saved || !saved.view || !Array.isArray(saved.view.apps)) return;
+          $('user').value = saved.q || '';
+          view = saved.view;
+        } catch {}
+      }
+
+      // ── Input parsing ──────────────────────────────────────────────────────
       // Decide whether the input is a GitHub *account* (search all its apps) or a
       // single *repo* (add it directly). Also accepts non-GitHub git URLs / local paths.
       function classify(input) {
@@ -168,125 +211,43 @@
         return { type: 'account', user: s.split(/[/#?]/)[0] };
       }
 
-      function iconHtml(a) {
-        return a.logo
-          ? `<img src="/apps/${a.id}/${String(a.logo).replace(/^\/+/, '')}" alt="" onerror="this.replaceWith(document.createTextNode('${mono(a.name)}'))">`
-          : mono(a.name);
+      function iconHtml(src, name) {
+        return src
+          ? `<img src="${escapeHtml(src)}" alt="" onerror="this.replaceWith(document.createTextNode('${mono(name)}'))">`
+          : mono(name);
       }
 
-      async function loadInstalled() {
-        try {
-          const res = await fetch('/shell/apps');
-          const { apps } = await res.json();
-          installedApps = apps.filter((a) => a.id !== 'store');
-          installedIds = new Set(installedApps.map((a) => a.id));
-          for (const id of [...selected]) if (!installedIds.has(id)) selected.delete(id);
-        } catch (e) {
-          installedEl.innerHTML = '<p class="note err">Could not load installed apps.</p>';
-          return;
-        }
-        renderInstalled();
+      // ── Available (search results) ─────────────────────────────────────────
+      function notice(text, cls) {
+        view = { notice: { text, cls: cls || '' } };
+        renderResults();
       }
 
-      function renderInstalled() {
-        const list = installedApps;
-        selectBtn.hidden = list.length === 0;
-        selectBtn.textContent = selectMode ? 'Cancel' : 'Select';
-        removeBtn.hidden = !selectMode;
-        removeBtn.disabled = selected.size === 0;
-        removeBtn.textContent = selected.size ? `Remove (${selected.size})` : 'Remove';
-        installedEl.classList.toggle('selecting', selectMode);
+      function renderResults() {
+        if (!view) { availSec.hidden = true; return; }
+        availSec.hidden = false;
 
-        if (!list.length) {
-          selectMode = false;
-          selectBtn.hidden = true;
-          removeBtn.hidden = true;
-          installedEl.innerHTML = '<p class="empty-row">No apps added yet.</p>';
+        if (view.notice) {
+          availCnt.textContent = '';
+          results.className = '';
+          results.innerHTML = `<p class="note ${view.notice.cls}">${escapeHtml(view.notice.text)}</p>`;
           return;
         }
 
-        installedEl.innerHTML = list.map((a) => {
-          const sel = selected.has(a.id);
+        availCnt.textContent = `${view.apps.length} · ${view.label}`;
+        results.className = 'grid';
+        results.innerHTML = view.apps.map((a) => {
+          const added = installedIds.has(a.id);
           return `
-            <div class="card${sel ? ' selected' : ''}" data-id="${a.id}">
-              ${selectMode ? `<div class="check">${sel ? '✓' : ''}</div>` : ''}
-              <div class="mono">${iconHtml(a)}</div>
+            <div class="card">
+              <div class="ico">${iconHtml(a.icon, a.name)}</div>
               <div class="meta">
-                <div class="name">${escapeHtml(a.name)}</div>
-                <div class="desc"><span class="dot ${a.status}"></span> ${a.status}${a.version ? ' · v' + escapeHtml(a.version) : ''}</div>
+                <div class="nm">${escapeHtml(a.name)}</div>
+                <div class="sb">${escapeHtml(a.sub)}</div>
               </div>
-            </div>`;
-        }).join('');
-
-        if (selectMode) {
-          installedEl.querySelectorAll('.card').forEach((card) => {
-            card.addEventListener('click', () => {
-              const id = card.dataset.id;
-              selected.has(id) ? selected.delete(id) : selected.add(id);
-              renderInstalled();
-            });
-          });
-        }
-      }
-
-      function escapeHtml(s) {
-        return String(s ?? '').replace(/[&<>"']/g, (c) =>
-          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-      }
-
-      // Detect app.manifest.json via raw (not counted against the API rate limit).
-      async function fetchManifest(user, repo, branch) {
-        const url = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/app.manifest.json`;
-        try {
-          const res = await fetch(url);
-          if (!res.ok) return null;
-          return await res.json();
-        } catch { return null; }
-      }
-
-      async function search(user) {
-        results.innerHTML = '<p class="spinner">Searching…</p>';
-        let repos;
-        try {
-          const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`);
-          if (res.status === 404) { results.innerHTML = `<p class="note err">No GitHub account “${escapeHtml(user)}”.</p>`; return; }
-          if (res.status === 403) { results.innerHTML = '<p class="note err">GitHub rate limit reached. Try again later.</p>'; return; }
-          if (!res.ok) { results.innerHTML = `<p class="note err">GitHub error (${res.status}).</p>`; return; }
-          repos = await res.json();
-        } catch (e) {
-          results.innerHTML = '<p class="note err">Could not reach GitHub.</p>';
-          return;
-        }
-
-        const scanned = repos.slice(0, 40);
-        results.innerHTML = `<p class="spinner">Scanning ${scanned.length} repos for apps…</p>`;
-
-        const found = (await Promise.all(scanned.map(async (r) => {
-          const manifest = await fetchManifest(user, r.name, r.default_branch || 'HEAD');
-          if (!manifest || !manifest.id) return null;
-          return { repo: r, manifest };
-        }))).filter(Boolean);
-
-        if (!found.length) {
-          results.innerHTML = `<p class="note">No apps found in ${scanned.length} repos (looked for <code>app.manifest.json</code> at the root).</p>`;
-          return;
-        }
-
-        results.innerHTML = found.map(({ repo, manifest }, i) => {
-          const added = installedIds.has(manifest.id);
-          const cloneUrl = repo.clone_url || `https://github.com/${user}/${repo.name}.git`;
-          return `
-            <div class="card" data-i="${i}">
-              <div class="mono">${mono(manifest.name)}</div>
-              <div class="meta">
-                <div class="name">${escapeHtml(manifest.name || repo.name)}</div>
-                <div class="desc">${escapeHtml(manifest.description || repo.description || repo.full_name)}</div>
-              </div>
-              <div class="act">
-                <button class="btn ${added ? 'added' : ''}" data-url="${escapeHtml(cloneUrl)}" ${added ? 'disabled' : ''}>
-                  ${added ? 'Added' : 'Add'}
-                </button>
-              </div>
+              <button class="btn ${added ? 'added' : ''}" data-url="${escapeHtml(a.cloneUrl)}" ${added ? 'disabled' : ''}>
+                ${added ? 'Added' : 'Add'}
+              </button>
             </div>`;
         }).join('');
 
@@ -294,6 +255,79 @@
           if (btn.classList.contains('added')) return;
           btn.addEventListener('click', () => addApp(btn));
         });
+      }
+
+      // Detect app.manifest.json via raw (not counted against the API rate limit).
+      // `no-cache` revalidates rather than trusting the HTTP cache: a transient 4xx/5xx
+      // from a previous scan would otherwise stick around and hide the app.
+      async function fetchManifest(user, repo, branch) {
+        try {
+          const res = await fetch(`https://raw.githubusercontent.com/${user}/${repo}/${branch}/app.manifest.json`, { cache: 'no-cache' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch { return null; }
+      }
+
+      // Pull the app's declared logo and inline it as a data URI. Going through
+      // fetch (rather than pointing <img> at raw.githubusercontent) sidesteps the
+      // content-type raw serves for .svg, and a data: URI in <img> can't run script.
+      async function fetchLogo(user, repo, branch, logoPath) {
+        if (!logoPath || typeof logoPath !== 'string') return null;
+        const clean = logoPath.replace(/^\/+/, '');
+        if (clean.includes('..')) return null;
+        try {
+          const res = await fetch(`https://raw.githubusercontent.com/${user}/${repo}/${branch}/${clean}`, { cache: 'no-cache' });
+          if (!res.ok) return null;
+          const buf = await res.arrayBuffer();
+          if (buf.byteLength > 256 * 1024) return null; // an icon this big isn't an icon
+          const type = /\.svg$/i.test(clean) ? 'image/svg+xml'
+            : /\.png$/i.test(clean) ? 'image/png'
+            : /\.jpe?g$/i.test(clean) ? 'image/jpeg'
+            : /\.gif$/i.test(clean) ? 'image/gif'
+            : /\.webp$/i.test(clean) ? 'image/webp'
+            : null;
+          if (!type) return null;
+          const bytes = new Uint8Array(buf);
+          let bin = '';
+          for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+          return `data:${type};base64,${btoa(bin)}`;
+        } catch { return null; }
+      }
+
+      async function search(user) {
+        notice('Searching…');
+        let repos;
+        try {
+          const res = await fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`);
+          if (res.status === 404) return notice(`No GitHub account “${user}”.`, 'err');
+          if (res.status === 403) return notice('GitHub rate limit reached. Try again later.', 'err');
+          if (!res.ok) return notice(`GitHub error (${res.status}).`, 'err');
+          repos = await res.json();
+        } catch {
+          return notice('Could not reach GitHub.', 'err');
+        }
+
+        const scanned = repos.slice(0, 40);
+        notice(`Scanning ${scanned.length} repos…`);
+
+        const found = (await Promise.all(scanned.map(async (r) => {
+          const branch = r.default_branch || 'HEAD';
+          const manifest = await fetchManifest(user, r.name, branch);
+          if (!manifest || !manifest.id) return null;
+          return {
+            id: manifest.id,
+            name: manifest.name || r.name,
+            sub: `${user}/${r.name}`,
+            cloneUrl: r.clone_url || `https://github.com/${user}/${r.name}.git`,
+            icon: await fetchLogo(user, r.name, branch, manifest.logo),
+          };
+        }))).filter(Boolean);
+
+        if (!found.length) return notice(`No apps in ${scanned.length} repos.`, '');
+
+        view = { label: user, apps: found };
+        renderResults();
+        persist();
       }
 
       async function addApp(btn) {
@@ -308,8 +342,6 @@
           });
           const data = await res.json();
           if (res.ok) {
-            btn.textContent = 'Added';
-            btn.classList.add('added');
             window.parent.postMessage('shell:refresh', '*'); // update the rail
             await loadInstalled();
           } else {
@@ -327,7 +359,7 @@
       // Add a single repo directly by its URL (or local path). `c` may carry a
       // subpath/branch for monorepo subfolder installs.
       async function importDirect(c) {
-        results.innerHTML = `<p class="spinner">Adding ${escapeHtml(c.label)}…</p>`;
+        notice(`Adding ${c.label}…`);
         try {
           const res = await fetch('/shell/install', {
             method: 'POST',
@@ -336,17 +368,84 @@
           });
           const data = await res.json();
           if (res.ok) {
-            results.innerHTML = `<p class="note ok">Added “${escapeHtml(data.app.name)}” — it's now in your rail.</p>`;
+            notice(`Added “${data.app.name}”.`, 'ok');
             window.parent.postMessage('shell:refresh', '*');
             await loadInstalled();
           } else {
-            results.innerHTML = `<p class="note err">${escapeHtml(data.error || 'Install failed.')}</p>`;
+            notice(data.error || 'Install failed.', 'err');
           }
         } catch (e) {
-          results.innerHTML = `<p class="note err">Request failed: ${escapeHtml(e.message)}</p>`;
+          notice('Request failed: ' + e.message, 'err');
+        }
+        persist(); // a notice isn't cached — drop any stale saved result set
+      }
+
+      // ── Added (installed apps) ─────────────────────────────────────────────
+      async function loadInstalled() {
+        try {
+          const res = await fetch('/shell/apps');
+          const { apps } = await res.json();
+          installedApps = apps.filter((a) => a.id !== 'store');
+          installedIds = new Set(installedApps.map((a) => a.id));
+          for (const id of [...selected]) if (!installedIds.has(id)) selected.delete(id);
+        } catch {
+          installedEl.innerHTML = '<p class="note err">Could not load installed apps.</p>';
+          return;
+        }
+        renderInstalled();
+        if (view && view.apps) renderResults(); // keep Add/Added buttons in sync
+      }
+
+      function renderInstalled() {
+        const list = installedApps;
+        addedCnt.textContent = list.length ? String(list.length) : '';
+        selectBtn.hidden = list.length === 0;
+        selectBtn.textContent = selectMode ? 'Cancel' : 'Select';
+        removeBtn.hidden = !selectMode;
+        removeBtn.disabled = selected.size === 0;
+        removeBtn.textContent = selected.size ? `Remove (${selected.size})` : 'Remove';
+        installedEl.classList.toggle('selecting', selectMode);
+
+        if (!list.length) {
+          selectMode = false;
+          selectBtn.hidden = true;
+          removeBtn.hidden = true;
+          installedEl.className = '';
+          installedEl.innerHTML = '<p class="note">Nothing added yet.</p>';
+          return;
+        }
+
+        installedEl.className = 'grid' + (selectMode ? ' selecting' : '');
+        installedEl.innerHTML = list.map((a) => {
+          const sel = selected.has(a.id);
+          const src = a.logo ? `/apps/${a.id}/${String(a.logo).replace(/^\/+/, '')}` : null;
+          // Only spell out the status when it's something the user should act on.
+          const sub = a.status === 'healthy'
+            ? (a.version ? 'v' + a.version : 'Ready')
+            : a.status;
+          return `
+            <div class="card${sel ? ' selected' : ''}" data-id="${a.id}">
+              ${selectMode ? `<div class="check">${sel ? '✓' : ''}</div>` : ''}
+              <div class="ico">${iconHtml(src, a.name)}</div>
+              <div class="meta">
+                <div class="nm">${escapeHtml(a.name)}</div>
+                <div class="sb"><span class="dot ${a.status}"></span>${escapeHtml(sub)}</div>
+              </div>
+            </div>`;
+        }).join('');
+
+        if (selectMode) {
+          installedEl.querySelectorAll('.card').forEach((card) => {
+            card.addEventListener('click', () => {
+              const id = card.dataset.id;
+              selected.has(id) ? selected.delete(id) : selected.add(id);
+              renderInstalled();
+            });
+          });
         }
       }
 
+      // ── Wiring ─────────────────────────────────────────────────────────────
       $('searchForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const c = classify($('user').value);
@@ -383,6 +482,8 @@
         await loadInstalled();
       });
 
+      restore();
+      renderResults();
       loadInstalled();
     </script>
   </body>
