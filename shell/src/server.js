@@ -27,28 +27,30 @@ const app = express();
 app.use(express.json());
 
 // --- Proxy: /apps/<id>/* → that app's subprocess ---------------------------
-// Mounted before static/JSON body handling of app routes. The router picks the
-// live target from the supervisor's port map on every request.
-app.use(
-  '/apps/:id',
-  createProxyMiddleware({
-    changeOrigin: true,
-    ws: true,
-    pathRewrite: (reqPath, req) => reqPath.replace(new RegExp(`^/apps/${req.params.id}`), '') || '/',
-    router: (req) => {
-      const port = supervisor.getPort(req.params.id);
-      if (!port) return undefined;
-      return `http://127.0.0.1:${port}`;
+// The router picks the live target from the supervisor's port map per request.
+const appProxy = createProxyMiddleware({
+  changeOrigin: true,
+  ws: true,
+  pathRewrite: (reqPath, req) => reqPath.replace(new RegExp(`^/apps/${req.params.id}`), '') || '/',
+  router: (req) => `http://127.0.0.1:${supervisor.getPort(req.params.id)}`,
+  on: {
+    error: (err, req, res) => {
+      // `res` may be a raw Socket (ws upgrade) — guard before responding.
+      if (!res || typeof res.writeHead !== 'function' || res.headersSent || res.writableEnded) return;
+      res.writeHead(502, { 'Content-Type': 'text/plain' });
+      res.end(`App "${req.params?.id}" is not reachable.`);
     },
-    on: {
-      error: (err, req, res) => {
-        if (res.writableEnded) return;
-        res.writeHead(502, { 'Content-Type': 'text/plain' });
-        res.end(`App "${req.params?.id}" is not reachable: ${err.message}`);
-      },
-    },
-  })
-);
+  },
+});
+
+// Guard: if the app isn't running (never installed, or just removed), reply 502
+// immediately rather than proxying to nowhere — which would hang the request.
+app.use('/apps/:id', (req, res, next) => {
+  if (!supervisor.getPort(req.params.id)) {
+    return res.status(502).type('text/plain').send(`App "${req.params.id}" is not running.`);
+  }
+  return appProxy(req, res, next);
+});
 
 // --- Contract + Shell API --------------------------------------------------
 
@@ -65,12 +67,34 @@ app.get('/shell/apps', (req, res) => {
   res.json({ apps });
 });
 
+// Rich per-app health for the Settings health view.
+app.get('/shell/health', (req, res) => {
+  const apps = registry.list().map((a) => ({
+    id: a.id,
+    name: a.name,
+    logo: a.logo ?? null,
+    version: a.version ?? null,
+    ...supervisor.getHealth(a.id),
+  }));
+  res.json({ apps });
+});
+
+// Run one health check now (on demand) and report the result.
+app.post('/shell/recheck', async (req, res) => {
+  const { id } = req.body ?? {};
+  if (!id) return res.status(400).json({ error: 'id is required.' });
+  const { ok, ms } = await supervisor.pingHealth(id);
+  res.json({ ok, ms, status: supervisor.getState(id).status });
+});
+
 // Clone → install → spawn → register. Owned by the Shell in the MVP.
 app.post('/shell/install', async (req, res) => {
   const repoUrl = (req.body?.repoUrl || '').trim();
+  const subpath = (req.body?.subpath || '').trim() || undefined;
+  const branch = (req.body?.branch || '').trim() || undefined;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required.' });
   try {
-    const { manifest, appDir } = await installFromGit(repoUrl, APPS_DIR);
+    const { manifest, appDir } = await installFromGit(repoUrl, APPS_DIR, { subpath, branch });
     const { status } = await supervisor.start(manifest, appDir);
     if (status !== 'healthy') {
       return res.status(502).json({
@@ -112,6 +136,27 @@ app.post('/shell/restart', async (req, res) => {
     res.json({ ok: status === 'healthy', status, stderr: supervisor.getStderr(id) });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Uninstall: stop the app, drop it from the registry, and delete its cloned files.
+app.post('/shell/uninstall', async (req, res) => {
+  const { id } = req.body ?? {};
+  if (!id) return res.status(400).json({ error: 'id is required.' });
+  if (id === 'store') return res.status(400).json({ error: 'The Store cannot be removed.' });
+  if (!registry.has(id)) return res.status(404).json({ error: `Unknown app "${id}".` });
+  try {
+    const record = registry.get(id);
+    supervisor.remove(id);
+    await registry.remove(id);
+    // Only delete files the Shell itself cloned (under the managed apps dir); never a
+    // source directory registered by path. App data under APP_DATA_ROOT is left intact.
+    if (record.path && path.resolve(record.path).startsWith(APPS_DIR + path.sep)) {
+      await fs.rm(record.path, { recursive: true, force: true });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -171,6 +216,7 @@ async function main() {
     console.log(`\n  Common App Shell running at ${SHELL_URL}\n`);
     console.log('Booting registered apps:');
     await bootRegisteredApps();
+    supervisor.startMonitor(); // begin continuous health checks
     console.log('\nReady.\n');
   });
 }

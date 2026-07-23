@@ -25,27 +25,44 @@ function run(command, cwd) {
  * Clone a repo and run its declared install command.
  * @param {string} repoUrl any git-cloneable ref: https URL, ssh, file://, or local path
  * @param {string} appsDir directory where installed apps are cloned
+ * @param {object} [opts]
+ * @param {string} [opts.subpath] install the app from this subfolder of the repo (monorepo support)
+ * @param {string} [opts.branch] clone this branch instead of the default
  * @returns {Promise<{manifest: object, appDir: string}>}
  */
-export async function installFromGit(repoUrl, appsDir) {
+export async function installFromGit(repoUrl, appsDir, { subpath, branch } = {}) {
   await fs.mkdir(appsDir, { recursive: true });
 
   // Clone into a temp dir first so we can read the manifest and learn the real id.
   const tmpDir = path.join(appsDir, `.tmp-${Date.now()}`);
-  await run(`git clone --depth 1 ${JSON.stringify(repoUrl)} ${JSON.stringify(tmpDir)}`, appsDir);
+  const branchArg = branch ? `--branch ${JSON.stringify(branch)} ` : '';
+  await run(`git clone --depth 1 ${branchArg}${JSON.stringify(repoUrl)} ${JSON.stringify(tmpDir)}`, appsDir);
+
+  // The app's root is either the clone root or a subfolder within it.
+  let appRoot = tmpDir;
+  if (subpath) {
+    appRoot = path.resolve(tmpDir, subpath);
+    // Guard against path traversal (e.g. "../../etc") escaping the clone.
+    if (appRoot !== tmpDir && !appRoot.startsWith(tmpDir + path.sep)) {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+      throw new Error(`Invalid subpath "${subpath}".`);
+    }
+  }
 
   let manifest;
   try {
-    manifest = await readManifest(tmpDir);
+    manifest = await readManifest(appRoot);
   } catch (err) {
     await fs.rm(tmpDir, { recursive: true, force: true });
     throw err;
   }
 
-  // Move into its id-named final location, replacing any prior install.
+  // Move just the app's folder into its id-named final location, then discard the
+  // rest of the clone (matters for monorepo subpath installs).
   const appDir = path.join(appsDir, manifest.id);
   await fs.rm(appDir, { recursive: true, force: true });
-  await fs.rename(tmpDir, appDir);
+  await fs.rename(appRoot, appDir);
+  if (appRoot !== tmpDir) await fs.rm(tmpDir, { recursive: true, force: true });
 
   try {
     await run(manifest.install, appDir);
