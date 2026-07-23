@@ -75,6 +75,25 @@
       .dot.crashed, .dot.failed { background: var(--bad); }
       .dot.starting { background: var(--warn); }
 
+      .btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+      .btn.ghost:hover { background: var(--surface-hi); filter: none; }
+      .btn.danger { background: var(--bad); color: #fff; }
+      .btn.small { padding: 6px 13px; font-size: 12.5px; }
+
+      .section-head { display: flex; align-items: center; justify-content: space-between; margin: 32px 2px 12px; }
+      .section-head .section { margin: 0; }
+      .sel-controls { display: flex; gap: 8px; }
+
+      #installed.selecting .card { cursor: pointer; }
+      #installed.selecting .card:hover { border-color: var(--surface-hi); }
+      .card.selected { border-color: var(--accent); background: var(--accent-weak); }
+      .check {
+        flex: 0 0 auto; width: 20px; height: 20px; border-radius: 6px;
+        border: 1.5px solid var(--border); display: grid; place-items: center;
+        color: #fff; font-size: 12px; line-height: 1;
+      }
+      .card.selected .check { background: var(--accent); border-color: var(--accent); }
+
       .note { color: var(--muted); font-size: 13px; padding: 6px 2px; }
       .note.err { color: var(--bad); }
       .note.ok { color: var(--ok); }
@@ -96,7 +115,13 @@
       <h2 class="section">Available apps</h2>
       <div id="results"><p class="empty-row">Search a GitHub account to see its apps.</p></div>
 
-      <h2 class="section">Added apps</h2>
+      <div class="section-head">
+        <h2 class="section">Added apps</h2>
+        <div class="sel-controls">
+          <button id="removeBtn" class="btn danger small" hidden>Remove</button>
+          <button id="selectBtn" class="btn ghost small" hidden>Select</button>
+        </div>
+      </div>
       <div id="installed"><p class="empty-row">Loading…</p></div>
     </div>
 
@@ -104,7 +129,12 @@
       const $ = (id) => document.getElementById(id);
       const results = $('results');
       const installedEl = $('installed');
+      const selectBtn = $('selectBtn');
+      const removeBtn = $('removeBtn');
       let installedIds = new Set();
+      let installedApps = [];
+      let selectMode = false;
+      const selected = new Set();
 
       const mono = (s) => (s || '?').trim().charAt(0).toUpperCase() || '?';
 
@@ -129,28 +159,64 @@
         return { type: 'account', user: s.split(/[/#?]/)[0] };
       }
 
+      function iconHtml(a) {
+        return a.logo
+          ? `<img src="/apps/${a.id}/${String(a.logo).replace(/^\/+/, '')}" alt="" onerror="this.replaceWith(document.createTextNode('${mono(a.name)}'))">`
+          : mono(a.name);
+      }
+
       async function loadInstalled() {
         try {
           const res = await fetch('/shell/apps');
           const { apps } = await res.json();
-          const list = apps.filter((a) => a.id !== 'store');
-          installedIds = new Set(list.map((a) => a.id));
-          if (!list.length) {
-            installedEl.innerHTML = '<p class="empty-row">No apps added yet.</p>';
-            return;
-          }
-          installedEl.innerHTML = list.map((a) => `
-            <div class="card">
-              <div class="mono">${a.logo
-                ? `<img src="/apps/${a.id}/${String(a.logo).replace(/^\/+/, '')}" alt="" onerror="this.replaceWith(document.createTextNode('${mono(a.name)}'))">`
-                : mono(a.name)}</div>
+          installedApps = apps.filter((a) => a.id !== 'store');
+          installedIds = new Set(installedApps.map((a) => a.id));
+          for (const id of [...selected]) if (!installedIds.has(id)) selected.delete(id);
+        } catch (e) {
+          installedEl.innerHTML = '<p class="note err">Could not load installed apps.</p>';
+          return;
+        }
+        renderInstalled();
+      }
+
+      function renderInstalled() {
+        const list = installedApps;
+        selectBtn.hidden = list.length === 0;
+        selectBtn.textContent = selectMode ? 'Cancel' : 'Select';
+        removeBtn.hidden = !selectMode;
+        removeBtn.disabled = selected.size === 0;
+        removeBtn.textContent = selected.size ? `Remove (${selected.size})` : 'Remove';
+        installedEl.classList.toggle('selecting', selectMode);
+
+        if (!list.length) {
+          selectMode = false;
+          selectBtn.hidden = true;
+          removeBtn.hidden = true;
+          installedEl.innerHTML = '<p class="empty-row">No apps added yet.</p>';
+          return;
+        }
+
+        installedEl.innerHTML = list.map((a) => {
+          const sel = selected.has(a.id);
+          return `
+            <div class="card${sel ? ' selected' : ''}" data-id="${a.id}">
+              ${selectMode ? `<div class="check">${sel ? '✓' : ''}</div>` : ''}
+              <div class="mono">${iconHtml(a)}</div>
               <div class="meta">
                 <div class="name">${escapeHtml(a.name)}</div>
                 <div class="desc"><span class="dot ${a.status}"></span> ${a.status}${a.version ? ' · v' + escapeHtml(a.version) : ''}</div>
               </div>
-            </div>`).join('');
-        } catch (e) {
-          installedEl.innerHTML = '<p class="note err">Could not load installed apps.</p>';
+            </div>`;
+        }).join('');
+
+        if (selectMode) {
+          installedEl.querySelectorAll('.card').forEach((card) => {
+            card.addEventListener('click', () => {
+              const id = card.dataset.id;
+              selected.has(id) ? selected.delete(id) : selected.add(id);
+              renderInstalled();
+            });
+          });
         }
       }
 
@@ -276,7 +342,35 @@
         const c = classify($('user').value);
         if (!c) return;
         if (c.type === 'account') search(c.user);
-        else importDirect(c.url, c.label);
+        else importDirect(c);
+      });
+
+      selectBtn.addEventListener('click', () => {
+        selectMode = !selectMode;
+        if (!selectMode) selected.clear();
+        renderInstalled();
+      });
+
+      removeBtn.addEventListener('click', async () => {
+        const ids = [...selected];
+        if (!ids.length) return;
+        const what = ids.length > 1 ? `${ids.length} apps` : 'this app';
+        if (!confirm(`Remove ${what}? This stops ${ids.length > 1 ? 'them' : 'it'} and deletes the installed files (app data is kept).`)) return;
+        removeBtn.disabled = true;
+        removeBtn.textContent = 'Removing…';
+        for (const id of ids) {
+          try {
+            await fetch('/shell/uninstall', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id }),
+            });
+          } catch {}
+        }
+        selected.clear();
+        selectMode = false;
+        window.parent.postMessage('shell:refresh', '*'); // update the rail
+        await loadInstalled();
       });
 
       loadInstalled();

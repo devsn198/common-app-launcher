@@ -117,6 +117,27 @@ app.post('/shell/restart', async (req, res) => {
   }
 });
 
+// Uninstall: stop the app, drop it from the registry, and delete its cloned files.
+app.post('/shell/uninstall', async (req, res) => {
+  const { id } = req.body ?? {};
+  if (!id) return res.status(400).json({ error: 'id is required.' });
+  if (id === 'store') return res.status(400).json({ error: 'The Store cannot be removed.' });
+  if (!registry.has(id)) return res.status(404).json({ error: `Unknown app "${id}".` });
+  try {
+    const record = registry.get(id);
+    supervisor.remove(id);
+    await registry.remove(id);
+    // Only delete files the Shell itself cloned (under the managed apps dir); never a
+    // source directory registered by path. App data under APP_DATA_ROOT is left intact.
+    if (record.path && path.resolve(record.path).startsWith(APPS_DIR + path.sep)) {
+      await fs.rm(record.path, { recursive: true, force: true });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Captured stderr for a failed/crashed app (shown in its tab).
 app.get('/shell/logs/:id', (req, res) => {
   res.type('text/plain').send(supervisor.getStderr(req.params.id) || '(no output captured)');

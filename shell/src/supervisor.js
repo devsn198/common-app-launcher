@@ -118,6 +118,12 @@ export class Supervisor {
     }
   }
 
+  /** Stop an app and forget it entirely (used on uninstall). */
+  remove(id) {
+    this.stop(id);
+    this.procs.delete(id);
+  }
+
   /** Restart a known app (must have been started before). */
   async restart(id) {
     const p = this.procs.get(id);
