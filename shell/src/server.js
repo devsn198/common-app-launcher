@@ -11,7 +11,10 @@ import { readManifest } from './manifest.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SHELL_ROOT = path.resolve(__dirname, '..');
 const REPO_ROOT = path.resolve(SHELL_ROOT, '..');
-const DATA_DIR = path.join(SHELL_ROOT, 'data');
+// Overridable so a test run gets a throwaway registry instead of the real one.
+const DATA_DIR = process.env.SHELL_DATA_DIR
+  ? path.resolve(process.env.SHELL_DATA_DIR)
+  : path.join(SHELL_ROOT, 'data');
 const APPS_DIR = path.join(DATA_DIR, 'apps');
 const APP_DATA_ROOT = path.join(DATA_DIR, 'app-data');
 const REGISTRY_FILE = path.join(DATA_DIR, 'registry.json');
