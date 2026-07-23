@@ -1,1 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5b8cff" stroke-width="2"/><path d="M12 7.5v5l3.5 2" stroke="#e7ebf3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="bodyC" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#a8e8ff"/>
+      <stop offset="0.55" stop-color="#49b9e8"/>
+      <stop offset="1" stop-color="#1f6fa8"/>
+    </linearGradient>
+    <linearGradient id="specC" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bounceC" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#a8e8ff" stop-opacity="0.55"/>
+      <stop offset="0.45" stop-color="#a8e8ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="12" cy="12" r="9.2" fill="url(#bodyC)"/>
+  <circle cx="12" cy="12" r="9.2" fill="url(#specC)"/>
+  <circle cx="12" cy="12" r="9.2" fill="url(#bounceC)"/>
+  <circle cx="12" cy="12" r="8.7" fill="none" stroke="#ffffff" stroke-opacity="0.38" stroke-width="0.7"/>
+  <circle cx="12" cy="12" r="6.6" fill="#0d1526" fill-opacity="0.5"/>
+  <path d="M12 7.6v4.6l3.1 1.8" stroke="#ffffff" stroke-width="1.7"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M6.6 8.1c1-1.6 2.5-2.7 3.9-3.1" stroke="#ffffff" stroke-opacity="0.8"
+        stroke-width="1.2" stroke-linecap="round" fill="none"/>
+</svg>

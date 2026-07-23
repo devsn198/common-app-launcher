@@ -50,11 +50,36 @@ body {
   color: var(--accent);
   cursor: pointer;
 }
-.logo svg { transition: filter 0.2s ease; }
-.logo:hover svg { filter: drop-shadow(0 0 4px rgba(91, 140, 255, 0.5)); }
-.logo.active svg {
-  filter: drop-shadow(0 0 5px rgba(120, 165, 255, 0.85))
-          drop-shadow(0 0 11px rgba(91, 140, 255, 0.5));
+/* A floating gem: it breathes slowly and its glow swells with it, so the mark
+   reads as a lit object suspended in the rail rather than a printed icon. */
+.logo img {
+  display: block;
+  animation: gem-float 6s ease-in-out infinite;
+  will-change: transform, filter;
+}
+@keyframes gem-float {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55))
+            drop-shadow(0 0 5px rgba(91, 140, 255, 0.28));
+  }
+  50% {
+    transform: scale(1.055) translateY(-1px);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 13px rgba(120, 165, 255, 0.62));
+  }
+}
+.logo:hover img { animation-duration: 3s; }
+/* In the Store the gem holds a brighter, steady bloom. */
+.logo.active img {
+  animation-duration: 4s;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 9px rgba(120, 165, 255, 0.8))
+          drop-shadow(0 0 20px rgba(91, 140, 255, 0.45));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo img { animation: none; }
 }
 
 /* Scrollable tile column. Extra bottom padding clears the floating footer so the
