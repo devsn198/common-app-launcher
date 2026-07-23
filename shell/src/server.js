@@ -90,9 +90,11 @@ app.post('/shell/recheck', async (req, res) => {
 // Clone → install → spawn → register. Owned by the Shell in the MVP.
 app.post('/shell/install', async (req, res) => {
   const repoUrl = (req.body?.repoUrl || '').trim();
+  const subpath = (req.body?.subpath || '').trim() || undefined;
+  const branch = (req.body?.branch || '').trim() || undefined;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required.' });
   try {
-    const { manifest, appDir } = await installFromGit(repoUrl, APPS_DIR);
+    const { manifest, appDir } = await installFromGit(repoUrl, APPS_DIR, { subpath, branch });
     const { status } = await supervisor.start(manifest, appDir);
     if (status !== 'healthy') {
       return res.status(502).json({

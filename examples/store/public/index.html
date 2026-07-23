@@ -148,7 +148,16 @@
           const segs = s.slice(i + 'github.com'.length).replace(/^[/:]+/, '').split(/[/#?]/).filter(Boolean);
           const user = segs[0];
           const repo = segs[1] && segs[1].replace(/\.git$/i, '');
-          if (user && repo) return { type: 'repo', url: `https://github.com/${user}/${repo}.git`, label: `${user}/${repo}` };
+          if (user && repo) {
+            const url = `https://github.com/${user}/${repo}.git`;
+            // …/tree/<branch>/<subpath> or …/blob/<branch>/<subpath> → install from that subfolder.
+            if ((segs[2] === 'tree' || segs[2] === 'blob') && segs.length > 4) {
+              const branch = segs[3];
+              const subpath = segs.slice(4).join('/');
+              return { type: 'repo', url, branch, subpath, label: `${user}/${repo}/${subpath}` };
+            }
+            return { type: 'repo', url, label: `${user}/${repo}` };
+          }
           if (user) return { type: 'account', user };
           return null;
         }
@@ -315,14 +324,15 @@
         }
       }
 
-      // Add a single repo directly by its URL (or local path).
-      async function importDirect(url, label) {
-        results.innerHTML = `<p class="spinner">Adding ${escapeHtml(label)}…</p>`;
+      // Add a single repo directly by its URL (or local path). `c` may carry a
+      // subpath/branch for monorepo subfolder installs.
+      async function importDirect(c) {
+        results.innerHTML = `<p class="spinner">Adding ${escapeHtml(c.label)}…</p>`;
         try {
           const res = await fetch('/shell/install', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repoUrl: url }),
+            body: JSON.stringify({ repoUrl: c.url, subpath: c.subpath, branch: c.branch }),
           });
           const data = await res.json();
           if (res.ok) {
