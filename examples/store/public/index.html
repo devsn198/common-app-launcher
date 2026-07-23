@@ -75,7 +75,6 @@
       }
       .btn:hover { filter: brightness(1.08); }
       .btn:disabled { opacity: .6; cursor: default; }
-      .btn.added { background: var(--surface-hi); color: var(--muted); cursor: default; }
       .btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
       .btn.ghost:hover { background: var(--surface-hi); filter: none; }
       .btn.danger { background: var(--bad); color: #fff; }
@@ -234,25 +233,30 @@
           return;
         }
 
-        availCnt.textContent = `${view.apps.length} · ${view.label}`;
+        // Anything already installed lives in "Added" — listing it here too is
+        // just noise. `view.apps` keeps the full result set, so uninstalling an
+        // app makes it reappear here without needing another search.
+        const shown = view.apps.filter((a) => !installedIds.has(a.id));
+        availCnt.textContent = `${shown.length} · ${view.label}`;
+
+        if (!shown.length) {
+          results.className = '';
+          results.innerHTML = `<p class="note">Every app from ${escapeHtml(view.label)} is added.</p>`;
+          return;
+        }
+
         results.className = 'grid';
-        results.innerHTML = view.apps.map((a) => {
-          const added = installedIds.has(a.id);
-          return `
+        results.innerHTML = shown.map((a) => `
             <div class="card">
               <div class="ico">${iconHtml(a.icon, a.name)}</div>
               <div class="meta">
                 <div class="nm">${escapeHtml(a.name)}</div>
                 <div class="sb">${escapeHtml(a.sub)}</div>
               </div>
-              <button class="btn ${added ? 'added' : ''}" data-url="${escapeHtml(a.cloneUrl)}" ${added ? 'disabled' : ''}>
-                ${added ? 'Added' : 'Add'}
-              </button>
-            </div>`;
-        }).join('');
+              <button class="btn" data-url="${escapeHtml(a.cloneUrl)}">Add</button>
+            </div>`).join('');
 
         results.querySelectorAll('button.btn').forEach((btn) => {
-          if (btn.classList.contains('added')) return;
           btn.addEventListener('click', () => addApp(btn));
         });
       }
