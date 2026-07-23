@@ -299,9 +299,20 @@ function renderStage() {
   else showStatus(app);
 }
 
+// Which tab (or Settings) the user is on, so a refresh returns them there
+// instead of bouncing back to the Store.
+const UI_KEY = 'shell:ui';
+function saveUi() {
+  try { localStorage.setItem(UI_KEY, JSON.stringify({ activeId, settingsOpen })); } catch {}
+}
+function loadUi() {
+  try { return JSON.parse(localStorage.getItem(UI_KEY) || 'null'); } catch { return null; }
+}
+
 function selectTab(id) {
   settingsOpen = false;
   activeId = id;
+  saveUi();
   renderTabs();
   renderStage();
 }
@@ -430,8 +441,8 @@ async function onHealthAction(action, id) {
   }
 }
 
-function openSettings() { settingsOpen = true; renderTabs(); renderStage(); renderSettings(); }
-function closeSettings() { settingsOpen = false; renderTabs(); renderStage(); }
+function openSettings() { settingsOpen = true; saveUi(); renderTabs(); renderStage(); renderSettings(); }
+function closeSettings() { settingsOpen = false; saveUi(); renderTabs(); renderStage(); }
 
 // Poll so newly installed apps and status changes appear live.
 function startPolling() {
@@ -463,5 +474,14 @@ window.addEventListener('message', (e) => {
   if (e.data === 'shell:refresh') refresh();
 });
 
+// Restore the last view before the first render, so there is no flash of the
+// Store on the way to wherever the user actually was.
+const savedUi = loadUi();
+if (savedUi) {
+  activeId = savedUi.activeId ?? null;
+  settingsOpen = !!savedUi.settingsOpen;
+}
+
 await refresh();
+if (settingsOpen) renderSettings();
 startPolling();
