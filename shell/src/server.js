@@ -27,28 +27,30 @@ const app = express();
 app.use(express.json());
 
 // --- Proxy: /apps/<id>/* → that app's subprocess ---------------------------
-// Mounted before static/JSON body handling of app routes. The router picks the
-// live target from the supervisor's port map on every request.
-app.use(
-  '/apps/:id',
-  createProxyMiddleware({
-    changeOrigin: true,
-    ws: true,
-    pathRewrite: (reqPath, req) => reqPath.replace(new RegExp(`^/apps/${req.params.id}`), '') || '/',
-    router: (req) => {
-      const port = supervisor.getPort(req.params.id);
-      if (!port) return undefined;
-      return `http://127.0.0.1:${port}`;
+// The router picks the live target from the supervisor's port map per request.
+const appProxy = createProxyMiddleware({
+  changeOrigin: true,
+  ws: true,
+  pathRewrite: (reqPath, req) => reqPath.replace(new RegExp(`^/apps/${req.params.id}`), '') || '/',
+  router: (req) => `http://127.0.0.1:${supervisor.getPort(req.params.id)}`,
+  on: {
+    error: (err, req, res) => {
+      // `res` may be a raw Socket (ws upgrade) — guard before responding.
+      if (!res || typeof res.writeHead !== 'function' || res.headersSent || res.writableEnded) return;
+      res.writeHead(502, { 'Content-Type': 'text/plain' });
+      res.end(`App "${req.params?.id}" is not reachable.`);
     },
-    on: {
-      error: (err, req, res) => {
-        if (res.writableEnded) return;
-        res.writeHead(502, { 'Content-Type': 'text/plain' });
-        res.end(`App "${req.params?.id}" is not reachable: ${err.message}`);
-      },
-    },
-  })
-);
+  },
+});
+
+// Guard: if the app isn't running (never installed, or just removed), reply 502
+// immediately rather than proxying to nowhere — which would hang the request.
+app.use('/apps/:id', (req, res, next) => {
+  if (!supervisor.getPort(req.params.id)) {
+    return res.status(502).type('text/plain').send(`App "${req.params.id}" is not running.`);
+  }
+  return appProxy(req, res, next);
+});
 
 // --- Contract + Shell API --------------------------------------------------
 
