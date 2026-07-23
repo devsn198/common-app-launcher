@@ -180,6 +180,7 @@ body {
   transition: background 0.15s ease, color 0.15s ease;
 }
 .settings:hover { background: var(--surface-hi); color: var(--text); }
+.settings.active { background: var(--surface-hi); color: var(--accent); }
 .settings svg { transition: transform 0.4s ease; }
 .settings:hover svg { transform: rotate(40deg); }
 
@@ -210,6 +211,87 @@ body {
   padding: 32px;
   text-align: center;
   background: var(--stage);
+}
+
+/* ── Settings pane (App Health) ───────────────────────────────────────── */
+.settings-pane {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--stage);
+}
+.settings-wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 64px; }
+.settings-title { font-size: 22px; margin: 0 0 24px; letter-spacing: 0.2px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; margin: 8px 2px 12px; }
+.sec-label {
+  font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--muted); margin: 0; font-weight: 600;
+}
+.sec-label.about-label { margin-top: 32px; }
+.sec-note { color: var(--muted); font-size: 13px; }
+.about-line { color: var(--muted); font-size: 13px; margin: 10px 2px 0; }
+.empty-row { color: var(--muted); font-size: 13px; padding: 4px 2px; }
+
+.hrow {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  background: var(--panel, #191e2a);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.hicon {
+  width: 40px; height: 40px; border-radius: 11px; background: var(--surface);
+  display: grid; place-items: center; font-weight: 600; font-size: 16px; color: var(--muted);
+}
+.hicon img { width: 24px; height: 24px; object-fit: contain; }
+.hmain { min-width: 0; }
+.hline1 { display: flex; align-items: center; gap: 10px; }
+.hname { font-weight: 600; }
+.hmeta {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  color: var(--muted); font-size: 12.5px; margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.hist-legend {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  color: var(--muted); font-size: 12px; margin: 0 2px 14px;
+}
+.hist-legend .ll-label { color: var(--muted); }
+.hist-legend .ll { display: inline-flex; align-items: center; gap: 5px; }
+.hist-legend .hd { display: inline-block; }
+
+.hhist { display: flex; gap: 3px; margin-top: 8px; }
+.hd { width: 8px; height: 8px; border-radius: 2px; background: var(--muted); }
+.hd-healthy { background: var(--dot-ok); }
+.hd-unhealthy { background: var(--dot-warn); }
+.hd-crashed, .hd-failed { background: var(--dot-bad); }
+.hd-starting { background: var(--muted); }
+
+.badge {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  padding: 2px 8px; border-radius: 6px;
+}
+.b-healthy { background: rgba(55, 201, 138, 0.16); color: var(--dot-ok); }
+.b-unhealthy { background: rgba(230, 171, 75, 0.18); color: var(--dot-warn); }
+.b-starting { background: rgba(138, 148, 168, 0.18); color: var(--muted); }
+.b-crashed, .b-failed, .b-unknown { background: rgba(240, 101, 95, 0.16); color: var(--dot-bad); }
+
+.hactions { display: flex; gap: 6px; align-self: start; }
+.mini {
+  padding: 5px 11px; border: 1px solid var(--border); border-radius: 8px;
+  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.mini:hover { color: var(--text); border-color: var(--muted); background: var(--surface); }
+.hlogs {
+  grid-column: 1 / -1;
+  margin: 10px 0 0; max-height: 200px; overflow: auto;
+  background: #0b0e15; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; color: #c3cbdc; font-size: 12px; white-space: pre-wrap;
 }
 
 .empty { color: var(--text); font-size: 16px; }

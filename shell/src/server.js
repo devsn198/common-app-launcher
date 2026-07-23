@@ -67,6 +67,26 @@ app.get('/shell/apps', (req, res) => {
   res.json({ apps });
 });
 
+// Rich per-app health for the Settings health view.
+app.get('/shell/health', (req, res) => {
+  const apps = registry.list().map((a) => ({
+    id: a.id,
+    name: a.name,
+    logo: a.logo ?? null,
+    version: a.version ?? null,
+    ...supervisor.getHealth(a.id),
+  }));
+  res.json({ apps });
+});
+
+// Run one health check now (on demand) and report the result.
+app.post('/shell/recheck', async (req, res) => {
+  const { id } = req.body ?? {};
+  if (!id) return res.status(400).json({ error: 'id is required.' });
+  const { ok, ms } = await supervisor.pingHealth(id);
+  res.json({ ok, ms, status: supervisor.getState(id).status });
+});
+
 // Clone → install → spawn → register. Owned by the Shell in the MVP.
 app.post('/shell/install', async (req, res) => {
   const repoUrl = (req.body?.repoUrl || '').trim();
@@ -194,6 +214,7 @@ async function main() {
     console.log(`\n  Common App Shell running at ${SHELL_URL}\n`);
     console.log('Booting registered apps:');
     await bootRegisteredApps();
+    supervisor.startMonitor(); // begin continuous health checks
     console.log('\nReady.\n');
   });
 }
