@@ -130,6 +130,43 @@ body {
   background: var(--accent);
 }
 
+/* Drag-to-reorder. The gesture is pointer-driven, so the browser must not also
+   treat a press-and-move on a tile as a scroll or a native drag. */
+.tab {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The lifted tile is positioned by an inline translateY every pointermove, so it
+   must not interpolate — any transition here would lag it behind the cursor. */
+.tab.dragging {
+  transition: none;
+  cursor: grabbing;
+  z-index: 5;
+  background: var(--s-3);
+  color: var(--text);
+  /* Keep the rim while airborne — dropping it makes the lifted tile go flat
+     at exactly the moment it should look most like an object. */
+  box-shadow:
+    inset 0 1px 0 var(--rim-strong),
+    inset 0 -1px 0 var(--under-strong),
+    var(--elev-overlay);
+}
+.tab.dragging::before { display: none; } /* no active pill on the tile in flight */
+
+/* The tiles being displaced animate, which is what makes the reorder read as a
+   glide instead of a jump. They move by transform only — never by layout. */
+.tablist.reordering .tab:not(.dragging) {
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+/* Suppress the *hover* lift so it can't fight the slot shift — but not the
+   active tile's own raised position, which it should keep while others move.
+   (Displaced tiles carry an inline transform, which wins over both anyway.) */
+.tablist.reordering .tab:not(.dragging):not(.active):hover {
+  transform: none;
+}
+
 /* "+" import button, sits right after the last tile */
 .add {
   background: transparent;

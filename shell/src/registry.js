@@ -55,4 +55,22 @@ export class Registry {
     this.apps.delete(id);
     await this.save();
   }
+
+  /**
+   * Rebuild the record order (a Map iterates in insertion order, and `list()`
+   * drives the rail). Unknown ids are ignored and any app the caller didn't
+   * mention keeps its relative order at the end, so a concurrent install can't
+   * be dropped by a stale reorder.
+   */
+  async reorder(ids) {
+    const next = new Map();
+    for (const id of ids) {
+      if (this.apps.has(id)) next.set(id, this.apps.get(id));
+    }
+    for (const [id, record] of this.apps) {
+      if (!next.has(id)) next.set(id, record);
+    }
+    this.apps = next;
+    await this.save();
+  }
 }

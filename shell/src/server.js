@@ -127,6 +127,18 @@ app.post('/shell/tabs', async (req, res) => {
   }
 });
 
+// Persist the rail's tile order after a drag.
+app.post('/shell/reorder', async (req, res) => {
+  const { ids } = req.body ?? {};
+  if (!Array.isArray(ids)) return res.status(400).json({ error: 'ids must be an array.' });
+  try {
+    await registry.reorder(ids);
+    res.json({ ok: true, order: registry.list().map((a) => a.id) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Restart a crashed/failed app.
 app.post('/shell/restart', async (req, res) => {
   const { id } = req.body ?? {};

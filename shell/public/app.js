@@ -14,6 +14,9 @@ let activeId = null;
 let pollTimer = null;
 let toastTimer = null;
 let settingsOpen = false;
+let drag = null;           // live rail-drag state, else null
+let railLocked = false;    // while set, renderTabs() stands down (drag in flight)
+let suppressClick = false; // swallow the click that trails a drag's pointerup
 const expandedLogs = new Set();
 
 const userApps = () => apps.filter((a) => a.id !== STORE_ID);
@@ -40,6 +43,7 @@ function toast(message) {
 }
 
 function renderTabs() {
+  if (railLocked) return; // never rebuild the rail out from under a live drag
   const scroll = tablistEl.scrollTop; // preserve scroll across the 2s poll re-render
   tablistEl.innerHTML = '';
 
@@ -69,7 +73,12 @@ function renderTabs() {
       btn.appendChild(m);
     }
 
-    btn.addEventListener('click', () => selectTab(app.id));
+    btn.dataset.id = app.id;
+    btn.addEventListener('pointerdown', onTilePointerDown);
+    btn.addEventListener('click', () => {
+      if (suppressClick) { suppressClick = false; return; } // that click ended a drag
+      selectTab(app.id);
+    });
     tablistEl.appendChild(btn);
   }
 
@@ -87,6 +96,135 @@ function renderTabs() {
   tablistEl.scrollTop = scroll;
   logo.classList.toggle('active', !settingsOpen && activeId === STORE_ID);
   settingsBtn.classList.toggle('active', settingsOpen);
+}
+
+// ── Rail reordering ────────────────────────────────────────────────────────
+// Pointer-driven rather than HTML5 drag-and-drop, for two reasons: the native
+// drag image can't be constrained to one axis, and native reordering means
+// moving nodes in the DOM — a layout change, which CSS cannot transition (hence
+// the snap). Here nothing moves in the DOM until the drop: the lifted tile gets
+// a translateY tracking the pointer, and the tiles it passes get a translateY of
+// one slot, which *is* transitionable. The DOM order is only rewritten at the end.
+
+const DRAG_THRESHOLD = 4; // px of travel before a press becomes a drag, so clicks still work
+const SETTLE_MS = 180;
+
+function onTilePointerDown(e) {
+  if (e.button !== 0) return; // primary button / touch only
+  // A drag doesn't always emit a trailing click (it depends where the pointer
+  // came to rest), so clear the flag per press rather than relying on that click
+  // to consume it — otherwise a stale `true` swallows the next real click.
+  suppressClick = false;
+  const tiles = [...tablistEl.querySelectorAll('.tab')];
+  if (tiles.length < 2) return; // nothing to reorder
+  const el = e.currentTarget;
+  const first = tiles[0].getBoundingClientRect();
+  drag = {
+    el,
+    tiles,
+    from: tiles.indexOf(el),
+    to: tiles.indexOf(el),
+    startY: e.clientY,
+    // Slot pitch = tile height + the flex gap, read from the live layout.
+    step: tiles.length > 1 ? tiles[1].getBoundingClientRect().top - first.top : el.offsetHeight,
+    active: false,
+    pointerId: e.pointerId,
+  };
+  railLocked = true; // freeze the rail: the poll must not rebuild it under us
+  el.setPointerCapture(e.pointerId);
+}
+
+// Shift every tile the dragged one has passed by exactly one slot, in the
+// direction that opens a hole at `to`. Tiles it hasn't passed sit at 0.
+function layoutSlots() {
+  const { tiles, el, from, to, step } = drag;
+  tiles.forEach((tile, i) => {
+    if (tile === el) return;
+    let shift = 0;
+    if (from < to && i > from && i <= to) shift = -step;
+    else if (from > to && i < from && i >= to) shift = step;
+    tile.style.transform = shift ? `translateY(${shift}px)` : '';
+  });
+}
+
+function onPointerMove(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  const dy = e.clientY - drag.startY;
+
+  if (!drag.active) {
+    if (Math.abs(dy) < DRAG_THRESHOLD) return;
+    drag.active = true;
+    drag.el.classList.add('dragging');
+    tablistEl.classList.add('reordering');
+  }
+
+  // Clamp to the column's own extent so the tile can't be dragged out of the rail.
+  const min = -drag.from * drag.step;
+  const max = (drag.tiles.length - 1 - drag.from) * drag.step;
+  const y = Math.max(min, Math.min(max, dy));
+
+  // Only translateY — X is never written, so the tile is pinned to the column.
+  drag.el.style.transform = `translateY(${y}px) scale(1.06)`;
+
+  const to = drag.from + Math.round(y / drag.step);
+  if (to !== drag.to) {
+    drag.to = to;
+    layoutSlots();
+  }
+}
+
+async function onPointerUp(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  const d = drag;
+  drag = null;
+  if (d.el.hasPointerCapture(d.pointerId)) d.el.releasePointerCapture(d.pointerId);
+
+  if (!d.active) { railLocked = false; return; } // a plain click, never became a drag
+
+  suppressClick = true; // the click that follows pointerup must not switch tabs
+
+  // Glide the tile the rest of the way into its slot before committing.
+  d.el.style.transition = `transform ${SETTLE_MS}ms cubic-bezier(0.2, 0.8, 0.3, 1)`;
+  d.el.style.transform = `translateY(${(d.to - d.from) * d.step}px) scale(1)`;
+  await new Promise((r) => setTimeout(r, SETTLE_MS));
+
+  for (const tile of d.tiles) { tile.style.transform = ''; tile.style.transition = ''; }
+  d.el.classList.remove('dragging');
+  tablistEl.classList.remove('reordering');
+
+  const order = d.tiles.map((t) => t.dataset.id);
+  order.splice(d.to, 0, order.splice(d.from, 1)[0]);
+  const rank = new Map(order.map((id, i) => [id, i]));
+  const at = (a) => rank.get(a.id) ?? Number.MAX_SAFE_INTEGER; // unrailed (Store) sinks last, as the registry does
+  apps.sort((a, b) => at(a) - at(b));
+
+  railLocked = false;
+  renderTabs(); // redraw in the committed order; transforms are already cleared
+
+  if (d.to === d.from) return; // ended in its original slot — nothing to persist
+  try {
+    const res = await fetch('/shell/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: order }),
+    });
+    if (!res.ok) throw new Error('reorder rejected');
+  } catch {
+    toast('Could not save the new order.');
+    await refresh(); // resync with whatever the server actually has
+  }
+}
+
+// Esc or a cancelled pointer (e.g. the OS taking over) abandons the drag.
+function cancelDrag() {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  for (const tile of d.tiles) tile.style.transform = '';
+  d.el.classList.remove('dragging');
+  tablistEl.classList.remove('reordering');
+  railLocked = false;
+  renderTabs();
 }
 
 function currentApp() {
@@ -310,6 +448,12 @@ function startPolling() {
     else if (prev !== next) renderStage();
   }, 2000);
 }
+
+// Pointer capture keeps these firing even when the cursor leaves the tile.
+window.addEventListener('pointermove', onPointerMove);
+window.addEventListener('pointerup', onPointerUp);
+window.addEventListener('pointercancel', cancelDrag);
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelDrag(); });
 
 logo.addEventListener('click', () => selectTab(STORE_ID));
 settingsBtn.addEventListener('click', () => (settingsOpen ? closeSettings() : openSettings()));
