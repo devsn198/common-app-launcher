@@ -46,6 +46,12 @@
     inset 0 -1px 0 var(--under-strong),
     var(--elev-contact),
     var(--elev-ambient);
+  /* Recessed: the light lands on the *lower* inner edge and the top is in
+     shadow — the exact inverse of the raised pair, so a hollow reads as carved
+     into the surface rather than sitting on it. */
+  --depth-sunken:
+    inset 0 2px 5px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 var(--rim);
 
   /* ── Ink ───────────────────────────────────────────────────────────────── */
   --text: #e7ebf3;
@@ -75,12 +81,12 @@
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  --fs-xs: 11px;
-  --fs-sm: 12.5px;
-  --fs-md: 14px;
-  --fs-lg: 16px;
-  --fs-xl: 22px;
-  --lh: 1.45;
+  --fs-xs: 11.5px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 24px;
+  --lh: 1.5;
 
   /* ── Rhythm ────────────────────────────────────────────────────────────
      A 4px spacing scale, and three radii instead of the seven that had
@@ -92,10 +98,20 @@
   --sp-5: 24px;
   --sp-6: 32px;
 
-  --r-sm: 6px;             /* badges, dots, tight chips */
-  --r-md: 9px;             /* buttons, inputs, cards    */
-  --r-lg: 13px;            /* tiles, large panels       */
+  --r-sm: 7px;             /* badges, dots, tight chips */
+  --r-md: 10px;            /* buttons, inputs, cards    */
+  --r-lg: 15px;            /* tiles, large panels       */
   --r-pill: 999px;
+
+  /* ── Rail geometry ─────────────────────────────────────────────────────
+     The "Comfortable" density step. Everything in the rail derives from these
+     four numbers, so the launcher rescales from one place instead of having
+     sizes sprinkled through the stylesheet. */
+  --rail-w: 80px;
+  --tile: 52px;
+  --tile-icon: 28px;
+  --tile-gap: 10px;
+  --pane-pad: 32px;        /* page padding inside the Shell's own panes */
 
   /* ── Motion ────────────────────────────────────────────────────────────
      One curve. Fast enough to feel mechanical, never bouncy — except the

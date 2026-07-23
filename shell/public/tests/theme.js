@@ -18,6 +18,7 @@ const REQUIRED = [
   'font-ui', 'font-mono', 'fs-xs', 'fs-sm', 'fs-md', 'fs-lg', 'fs-xl', 'lh',
   'sp-1', 'sp-2', 'sp-3', 'sp-4', 'sp-5', 'sp-6',
   'r-sm', 'r-md', 'r-lg', 'ease', 'dur-1', 'dur-2',
+  'depth-sunken', 'rail-w', 'tile', 'tile-icon', 'tile-gap', 'pane-pad',
 ];
 
 // The aliases the bundled apps were written against, kept for compatibility.
