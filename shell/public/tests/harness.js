@@ -17,6 +17,21 @@ export function eq(actual, expected, msg) {
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Click the way a browser actually does: pointerdown → pointerup → click.
+ *
+ * A bare `el.click()` skips the pointer events, and the rail relies on
+ * pointerdown to clear the flag that suppresses the click trailing a drag. A
+ * suite that used the bare form passed on a fresh page and failed on a re-run,
+ * because the previous run's last drag left that flag armed.
+ */
+export function realClick(el) {
+  const opts = { bubbles: true, cancelable: true, pointerId: 1, button: 0, isPrimary: true };
+  el.dispatchEvent(new PointerEvent('pointerdown', opts));
+  el.dispatchEvent(new PointerEvent('pointerup', opts));
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+}
+
 /** Poll until `fn()` is truthy, or throw. Beats sleeping a guessed duration. */
 export async function until(fn, msg = 'condition', timeout = 5000) {
   const deadline = Date.now() + timeout;
