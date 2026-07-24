@@ -4,15 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Manifest Maker</title>
+    <!-- The launcher's design system; see shell/public/theme.css. -->
+    <link rel="stylesheet" href="/theme.css" />
     <style>
-      :root {
-        --bg: #10141d; --panel: #191e2a; --surface: #242c3c; --surface-hi: #2e3750;
-        --text: #e7ebf3; --muted: #8a94a8; --accent: #5b8cff; --accent-weak: rgba(91,140,255,.16);
-        --border: #303950; --ok: #37c98a;
-      }
       * { box-sizing: border-box; }
-      body { margin: 0; background: var(--bg); color: var(--text);
-             font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      body { margin: 0; background: var(--s-0); color: var(--text);
+             font: var(--fs-md) / var(--lh) var(--font-ui);
+             -webkit-font-smoothing: antialiased; }
       .wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px 64px; }
       h1 { font-size: 22px; margin: 0 0 4px; }
       .lead { color: var(--muted); margin: 0 0 24px; }
@@ -28,16 +26,16 @@
         background: var(--panel); color: var(--text); font-size: 13px; font-family: inherit;
       }
       input:focus { outline: 2px solid var(--accent-weak); border-color: var(--accent); }
-      input.invalid { border-color: #f0655f; }
+      input.invalid { border-color: var(--bad); }
 
       .preview { position: sticky; top: 24px; }
       .preview h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 0 0 10px; }
       pre {
-        margin: 0; background: #0b0e15; border: 1px solid var(--border); border-radius: 10px;
-        padding: 16px; font: 12.5px/1.6 ui-monospace, "SF Mono", Menlo, monospace;
-        color: #c3cbdc; overflow: auto; max-height: 52vh;
+        margin: 0; background: var(--s-sunken); border: 1px solid var(--border); border-radius: 10px;
+        padding: 16px; font: var(--fs-sm)/1.6 var(--font-mono);
+        color: var(--text); overflow: auto; max-height: 52vh;
       }
-      .k { color: #7fa8ff; } .s { color: #8fd6a8; } .p { color: #6b7688; }
+      .k { color: var(--accent); } .s { color: var(--ok); } .p { color: var(--faint); }
       .row { display: flex; gap: 8px; margin-top: 12px; }
       .btn { padding: 9px 16px; border: 0; border-radius: 8px; background: var(--accent);
              color: #fff; font-size: 13px; cursor: pointer; }
@@ -45,7 +43,7 @@
       .btn:hover { filter: brightness(1.08); }
       .flash { color: var(--ok); font-size: 12.5px; align-self: center; opacity: 0; transition: opacity .2s; }
       .flash.show { opacity: 1; }
-      .warn { color: #f0655f; font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+      .warn { color: var(--bad); font-size: 12.5px; margin-top: 10px; min-height: 16px; }
     </style>
   </head>
   <body>

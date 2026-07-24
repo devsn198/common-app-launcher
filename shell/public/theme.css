@@ -1,0 +1,155 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Common App Launcher — design tokens
+   "Precision instrument": quiet, dark, physical. Depth comes from LIGHT, never
+   from shadow — on a #10141d surface there is no luminance left to darken.
+
+   This file is the SINGLE source of truth for the launcher's look. The Shell
+   serves it statically, and because apps are proxied onto the Shell's origin
+   (an iframe at /apps/<id>/ is still localhost:4000) any app can adopt the whole
+   system with one line:
+
+       <link rel="stylesheet" href="/theme.css" />
+
+   Do not copy these values into an app. Three divergent copies is exactly the
+   drift this file exists to end.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surfaces ──────────────────────────────────────────────────────────
+     A luminance ladder. On a dark UI, elevation *is* brightness: a raised
+     thing is lighter than what it sits on, never darker with a shadow. */
+  --s-0: #10141d;          /* stage / page background      */
+  --s-1: #191e2a;          /* rail, panels, cards          */
+  --s-2: #242c3c;          /* chips + tiles at rest        */
+  --s-3: #2e3750;          /* raised: hover / active       */
+  --s-sunken: #0b0e15;     /* recessed: log wells, code    */
+
+  --line: #262d3c;         /* hairline dividers            */
+  --border: #303950;       /* control outlines             */
+
+  /* ── Depth primitives (Rim Light) ──────────────────────────────────────
+     A top highlight reads as a surface catching light from above; a dark
+     bottom edge reads as its shadowed underside. That pair is what makes a
+     tile feel like an object rather than a coloured rectangle. */
+  --rim: rgba(255, 255, 255, 0.07);
+  --rim-strong: rgba(255, 255, 255, 0.22);
+  --under: rgba(0, 0, 0, 0.35);
+  --under-strong: rgba(0, 0, 0, 0.55);
+  --elev-contact: 0 1px 1px rgba(0, 0, 0, 0.5);   /* grounds the object   */
+  --elev-ambient: 0 8px 18px rgba(0, 0, 0, 0.45); /* soft occlusion       */
+  --elev-overlay: 0 16px 40px rgba(0, 0, 0, 0.55);/* toasts, dragged tile */
+
+  /* Composed, so "raised" is stated once and reused everywhere. */
+  --depth-rest: inset 0 1px 0 var(--rim), inset 0 -1px 0 var(--under);
+  --depth-raised:
+    inset 0 1px 0 var(--rim-strong),
+    inset 0 -1px 0 var(--under-strong),
+    var(--elev-contact),
+    var(--elev-ambient);
+  /* Recessed: the light lands on the *lower* inner edge and the top is in
+     shadow — the exact inverse of the raised pair, so a hollow reads as carved
+     into the surface rather than sitting on it. */
+  --depth-sunken:
+    inset 0 2px 5px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 var(--rim);
+
+  /* ── Ink ───────────────────────────────────────────────────────────────── */
+  --text: #e7ebf3;
+  --muted: #8a94a8;
+  --faint: #5d6880;
+
+  /* ── Accent ────────────────────────────────────────────────────────────
+     RULE: the accent signals STATE — active tab, focus, primary action.
+     It is never decoration. That restraint is most of what makes the
+     interface read as an instrument rather than a brochure. */
+  --accent: #5b8cff;
+  --accent-weak: rgba(91, 140, 255, 0.16);
+  --accent-line: rgba(91, 140, 255, 0.55);
+
+  /* ── Status ────────────────────────────────────────────────────────────── */
+  --ok: #37c98a;
+  --warn: #e6ab4b;
+  --bad: #f0655f;
+  --ok-bg: rgba(55, 201, 138, 0.16);
+  --warn-bg: rgba(230, 171, 75, 0.18);
+  --bad-bg: rgba(240, 101, 95, 0.16);
+  --neutral-bg: rgba(138, 148, 168, 0.18);
+
+  /* ── Type ──────────────────────────────────────────────────────────────
+     System sans for prose and controls; mono for anything the eye needs to
+     compare down a column — ports, uptimes, counts, versions, ids. */
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --fs-xs: 11.5px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 24px;
+  --lh: 1.5;
+
+  /* ── Rhythm ────────────────────────────────────────────────────────────
+     A 4px spacing scale, and three radii instead of the seven that had
+     accumulated (8/9/10/11/12/13px were all in use). */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  --r-sm: 7px;             /* badges, dots, tight chips */
+  --r-md: 10px;            /* buttons, inputs, cards    */
+  --r-lg: 15px;            /* tiles, large panels       */
+  --r-pill: 999px;
+
+  /* ── Rail geometry ─────────────────────────────────────────────────────
+     The "Comfortable" density step. Everything in the rail derives from these
+     four numbers, so the launcher rescales from one place instead of having
+     sizes sprinkled through the stylesheet. */
+  --rail-w: 80px;
+  --tile: 52px;
+  --tile-icon: 28px;
+  --tile-gap: 10px;
+  --pane-pad: 32px;        /* page padding inside the Shell's own panes */
+
+  /* ── Motion ────────────────────────────────────────────────────────────
+     One curve. Fast enough to feel mechanical, never bouncy — except the
+     selection pill, which is the single place a little spring is welcome. */
+  --ease: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --dur-1: 0.15s;
+  --dur-2: 0.22s;
+
+  /* ── Compatibility aliases ─────────────────────────────────────────────
+     The Shell and the bundled apps had grown two different names for the
+     same values (--stage/--rail/--dot-ok vs --bg/--panel/--ok). These keep
+     any app written against either vocabulary working. New code should use
+     the canonical names above. */
+  --stage: var(--s-0);
+  --bg: var(--s-0);
+  --rail: var(--s-1);
+  --panel: var(--s-1);
+  --surface: var(--s-2);
+  --surface-hi: var(--s-3);
+  --rail-edge: var(--line);
+  --dot-ok: var(--ok);
+  --dot-warn: var(--warn);
+  --dot-bad: var(--bad);
+  --shadow: var(--elev-ambient);
+}
+
+/* Numeric data: mono + tabular figures so digits stop shifting as values tick. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Every app inherits the same ground so iframes don't seam against the stage. */
+.app-base {
+  margin: 0;
+  background: var(--s-0);
+  color: var(--text);
+  font: var(--fs-md) / var(--lh) var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}

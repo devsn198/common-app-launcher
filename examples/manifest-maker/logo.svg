@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="bodyK" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#c9b6ff"/>
+      <stop offset="0.55" stop-color="#8b6ef0"/>
+      <stop offset="1" stop-color="#4a33a8"/>
+    </linearGradient>
+    <linearGradient id="specK" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bounceK" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#c9b6ff" stop-opacity="0.55"/>
+      <stop offset="0.45" stop-color="#c9b6ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path d="M6.2 3.2h7.4l4.2 4.2v13.4a1 1 0 0 1-1 1H6.2a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1z" fill="url(#bodyK)"/>
+  <path d="M6.2 3.2h7.4l4.2 4.2v13.4a1 1 0 0 1-1 1H6.2a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1z" fill="url(#specK)"/>
+  <path d="M6.2 3.2h7.4l4.2 4.2v13.4a1 1 0 0 1-1 1H6.2a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1z" fill="url(#bounceK)"/>
+  <path d="M13.6 3.2v4.2h4.2z" fill="#0d1526" fill-opacity="0.45"/>
+  <path d="M11.6 11.2v6M8.6 14.2h6" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M6.9 4.6c.5-.5 1.2-.7 1.9-.7" stroke="#ffffff" stroke-opacity="0.8"
+        stroke-width="1.05" stroke-linecap="round" fill="none"/>
+</svg>

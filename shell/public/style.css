@@ -1,20 +1,6 @@
-:root {
-  /* Dark grey with a blue tinge */
-  --rail: #191e2a;          /* the left rail */
-  --rail-edge: #262d3c;     /* rail hairline / divider */
-  --stage: #10141d;         /* content gutter behind app iframes */
-  --surface: #242c3c;       /* raised chips: app tiles */
-  --surface-hi: #2e3750;    /* hovered / active chips */
-  --text: #e7ebf3;
-  --muted: #8a94a8;
-  --accent: #5b8cff;
-  --accent-weak: rgba(91, 140, 255, 0.16);
-  --border: #303950;
-  --dot-ok: #37c98a;
-  --dot-bad: #f0655f;
-  --dot-warn: #e6ab4b;
-  --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
+/* Design tokens live in theme.css, which index.html loads first. Nothing in
+   this file may define a colour, radius or duration of its own — that split is
+   what let three divergent copies of the palette exist. */
 
 * { box-sizing: border-box; }
 
@@ -26,9 +12,10 @@
 html, body {
   margin: 0;
   height: 100%;
-  background: var(--stage);
+  background: var(--s-0);
   color: var(--text);
-  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: var(--fs-md) / var(--lh) var(--font-ui);
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
@@ -40,34 +27,89 @@ body {
 /* ── Left rail ─────────────────────────────────────────────────────────── */
 #rail {
   position: relative;
-  flex: 0 0 68px;
-  width: 68px;
+  flex: 0 0 var(--rail-w);
+  width: var(--rail-w);
   height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--rail);
-  border-right: 1px solid var(--rail-edge);
+  background: var(--s-1);
+  border-right: 1px solid var(--line);
 }
 
 /* Logo doubles as the Store button — always blue, glows when the Store is open */
 .logo {
   flex: 0 0 auto;
-  height: 60px;
+  height: calc(var(--tile) * 1.36);
   width: 100%;
   display: grid;
   place-items: center;
   border: 0;
-  border-bottom: 1px solid var(--rail-edge);
+  border-bottom: 1px solid var(--line);
   background: transparent;
   color: var(--accent);
   cursor: pointer;
 }
-.logo svg { transition: filter 0.2s ease; }
-.logo:hover svg { filter: drop-shadow(0 0 4px rgba(91, 140, 255, 0.5)); }
-.logo.active svg {
-  filter: drop-shadow(0 0 5px rgba(120, 165, 255, 0.85))
-          drop-shadow(0 0 11px rgba(91, 140, 255, 0.5));
+/* A floating gem. Enough motion to notice at the edge of vision, not enough to
+   pull the eye away from the app you are actually using — roughly half the
+   swing of a full "pulse", on a slow cycle. */
+.logo { position: relative; }
+.logo img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: calc(var(--tile-icon) * 1.25);
+  height: calc(var(--tile-icon) * 1.25);
+  animation: gem-float 5.4s ease-in-out infinite;
+  will-change: transform, filter;
+}
+@keyframes gem-float {
+  0%, 100% {
+    transform: scale(0.975) translateY(1.5px);
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55))
+            drop-shadow(0 0 4px rgba(91, 140, 255, 0.22));
+  }
+  50% {
+    transform: scale(1.075) translateY(-2.5px);
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 10px rgba(140, 180, 255, 0.55))
+            drop-shadow(0 0 22px rgba(91, 140, 255, 0.3));
+  }
+}
+
+/* A separate halo, because a drop-shadow alone stays tight to the silhouette
+   and is easy to miss against the rail. */
+.logo::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--tile) * 1.5);
+  height: calc(var(--tile) * 1.5);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(91, 140, 255, 0.30) 0%, rgba(91, 140, 255, 0.09) 42%, transparent 68%);
+  transform: translate(-50%, -50%) scale(0.75);
+  opacity: 0.16;
+  pointer-events: none;
+  animation: gem-halo 5.4s ease-in-out infinite;
+}
+@keyframes gem-halo {
+  0%, 100% { opacity: 0.14; transform: translate(-50%, -50%) scale(0.75); }
+  50%      { opacity: 0.55; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+.logo:hover img, .logo:hover::after { animation-duration: 3.2s; }
+
+/* In the Store the gem sits a little brighter. */
+.logo.active img { animation-duration: 4.6s; }
+.logo.active::after {
+  background: radial-gradient(circle, rgba(120, 165, 255, 0.42) 0%, rgba(91, 140, 255, 0.14) 45%, transparent 70%);
+  animation-duration: 4.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo img { animation: none; }
+  .logo::after { animation: none; opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* Scrollable tile column. Extra bottom padding clears the floating footer so the
@@ -80,8 +122,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 12px 12px 74px;    /* L/R = (68-44)/2 centers 44px tiles */
+  gap: var(--tile-gap);
+  /* L/R padding centres the tiles; bottom clears the floating footer. */
+  padding: var(--tile-gap) calc((var(--rail-w) - var(--tile)) / 2) calc(var(--tile) * 1.7);
   scrollbar-width: none;
 }
 .tablist::-webkit-scrollbar { display: none; }
@@ -90,9 +133,9 @@ body {
 .tab, .add {
   position: relative;
   flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: var(--r-lg);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -100,46 +143,103 @@ body {
   transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
 
-/* Monogram tile */
+/* Monogram tile. Rim Light: every tile carries a top highlight and a dark
+   under-edge, so the whole rail reads as physical objects rather than flat
+   stickers — not just whichever one happens to be selected. */
 .tab {
-  background: var(--surface);
+  background: var(--s-2);
   color: var(--muted);
-  font-size: 17px;
+  font-size: var(--fs-lg);
   font-weight: 600;
   letter-spacing: 0.2px;
+  box-shadow: var(--depth-rest);
 }
 /* App-supplied logo inside the tile */
 .tab .logo-img {
-  width: 24px;
-  height: 24px;
+  width: var(--tile-icon);
+  height: var(--tile-icon);
   object-fit: contain;
   pointer-events: none;
 }
-.tab:hover { background: var(--surface-hi); color: var(--text); transform: translateY(-1px); }
-.tab.active { background: var(--surface-hi); color: var(--text); box-shadow: var(--shadow); }
+.tab:hover { background: var(--s-3); color: var(--text); transform: translateY(-1px); }
+
+/* Raised: a brighter rim, a deeper under-edge, and a contact shadow that keeps
+   the tile grounded rather than drifting. The lift is what the ambient shadow
+   is *for* — on its own that shadow was invisible against #10141d. */
+.tab.active {
+  background: var(--s-3);
+  color: var(--text);
+  transform: translateY(-2px);
+  box-shadow: var(--depth-raised);
+}
 
 /* Active indicator: a pill on the rail's left edge */
 .tab.active::before {
   content: "";
   position: absolute;
-  left: -12px;
+  left: calc((var(--rail-w) - var(--tile)) / -2);
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 22px;
+  height: calc(var(--tile) * 0.44);
   border-radius: 0 3px 3px 0;
   background: var(--accent);
 }
 
-/* "+" import button, sits right after the last tile */
-.add {
-  background: transparent;
-  color: var(--muted);
-  border: 1.5px dashed var(--border);
-  margin-top: 2px;
+/* Drag-to-reorder. The gesture is pointer-driven, so the browser must not also
+   treat a press-and-move on a tile as a scroll or a native drag. */
+.tab {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
-.add svg { display: block; }
-.add:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-weak); }
+
+/* The lifted tile is positioned by an inline translateY every pointermove, so it
+   must not interpolate — any transition here would lag it behind the cursor. */
+.tab.dragging {
+  transition: none;
+  cursor: grabbing;
+  z-index: 5;
+  background: var(--s-3);
+  color: var(--text);
+  /* Keep the rim while airborne — dropping it makes the lifted tile go flat
+     at exactly the moment it should look most like an object. */
+  box-shadow:
+    inset 0 1px 0 var(--rim-strong),
+    inset 0 -1px 0 var(--under-strong),
+    var(--elev-overlay);
+}
+.tab.dragging::before { display: none; } /* no active pill on the tile in flight */
+
+/* The tiles being displaced animate, which is what makes the reorder read as a
+   glide instead of a jump. They move by transform only — never by layout. */
+.tablist.reordering .tab:not(.dragging) {
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+/* Suppress the *hover* lift so it can't fight the slot shift — but not the
+   active tile's own raised position, which it should keep while others move.
+   (Displaced tiles carry an inline transform, which wins over both anyway.) */
+.tablist.reordering .tab:not(.dragging):not(.active):hover {
+  transform: none;
+}
+
+/* "+" import button, sits right after the last tile */
+/* An empty socket waiting for an app, so it reads as the absence of a tile
+   rather than another tile. Same footprint, inverted lighting: dark along the
+   top inner edge, a highlight along the bottom. */
+.add {
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  margin-top: 2px;
+  box-shadow: var(--depth-sunken);
+}
+.add svg { display: block; width: calc(var(--tile-icon) * 0.8); height: calc(var(--tile-icon) * 0.8); }
+.add:hover {
+  color: var(--accent);
+  border-color: var(--accent-line);
+  background: var(--accent-weak);
+}
 .add.active { color: var(--accent); border-color: var(--accent); border-style: solid; }
 
 /* Footer floats above the tile list; the gradient lets tiles scroll under it */
@@ -150,8 +250,8 @@ body {
   bottom: 0;
   display: flex;
   justify-content: center;
-  padding: 15px 0 16px;
-  background: linear-gradient(to top, var(--rail) 72%, rgba(25, 30, 42, 0));
+  padding: var(--sp-4) 0 calc(var(--sp-4) + 2px);
+  background: linear-gradient(to top, var(--s-1) 72%, transparent);
   pointer-events: none;
 }
 /* hairline separating the settings button from the app tiles above —
@@ -163,26 +263,42 @@ body {
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--rail-edge);
+  background: var(--line);
 }
 .rail-btn { pointer-events: auto; }
 
+/* Built like a tile so it belongs to the same set: same radius, same rim when
+   it is raised. It stays flat until touched, because it is chrome, not content. */
 .settings {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: calc(var(--tile) - 4px);
+  height: calc(var(--tile) - 4px);
+  border-radius: var(--r-lg);
   border: 0;
   cursor: pointer;
   background: transparent;
   color: var(--muted);
   display: grid;
   place-items: center;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease),
+              box-shadow var(--dur-1) var(--ease);
 }
-.settings:hover { background: var(--surface-hi); color: var(--text); }
-.settings.active { background: var(--surface-hi); color: var(--accent); }
-.settings svg { transition: transform 0.4s ease; }
-.settings:hover svg { transform: rotate(40deg); }
+.settings img {
+  display: block;
+  width: calc(var(--tile-icon) * 0.95);
+  height: calc(var(--tile-icon) * 0.95);
+  opacity: 0.72;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+  transition: transform 0.45s var(--ease), opacity var(--dur-1) var(--ease), filter var(--dur-1) var(--ease);
+}
+.settings:hover { background: var(--s-2); box-shadow: var(--depth-rest); }
+.settings:hover img { transform: rotate(40deg); opacity: 1; }
+.settings.active { background: var(--s-3); box-shadow: var(--depth-raised); }
+/* Active: the gear catches the accent, matching how a selected tile is lit. */
+.settings.active img {
+  opacity: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 7px rgba(91, 140, 255, 0.75));
+}
 
 /* ── Stage (app content) ──────────────────────────────────────────────── */
 #stage {
@@ -196,7 +312,7 @@ body {
   width: 100%;
   height: 100%;
   border: 0;
-  background: var(--stage);
+  background: var(--s-0);
   display: block;
 }
 
@@ -210,7 +326,7 @@ body {
   gap: 12px;
   padding: 32px;
   text-align: center;
-  background: var(--stage);
+  background: var(--s-0);
 }
 
 /* ── Settings pane (App Health) ───────────────────────────────────────── */
@@ -218,42 +334,46 @@ body {
   position: absolute;
   inset: 0;
   overflow-y: auto;
-  background: var(--stage);
+  background: var(--s-0);
 }
-.settings-wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 64px; }
-.settings-title { font-size: 22px; margin: 0 0 24px; letter-spacing: 0.2px; }
+.settings-wrap { max-width: 1040px; margin: 0 auto; padding: var(--pane-pad) var(--pane-pad) 72px; }
+.settings-title { font-size: var(--fs-xl); margin: 0 0 var(--sp-5); letter-spacing: -0.01em; font-weight: 650; }
 .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin: 8px 2px 12px; }
 .sec-label {
-  font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px;
+  font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.07em;
   color: var(--muted); margin: 0; font-weight: 600;
 }
 .sec-label.about-label { margin-top: 32px; }
-.sec-note { color: var(--muted); font-size: 13px; }
+.sec-note { color: var(--muted); font-size: var(--fs-sm); font-family: var(--font-mono); }
 .about-line { color: var(--muted); font-size: 13px; margin: 10px 2px 0; }
 .empty-row { color: var(--muted); font-size: 13px; padding: 4px 2px; }
 
 .hrow {
   display: grid;
-  grid-template-columns: 40px 1fr auto;
+  grid-template-columns: calc(var(--tile-icon) * 1.7) 1fr auto;
   align-items: center;
-  gap: 14px;
-  background: var(--panel, #191e2a);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
+  gap: var(--sp-4);
+  background: var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--sp-4) var(--sp-4);
+  margin-bottom: var(--sp-2);
+  box-shadow: var(--depth-rest);
 }
 .hicon {
-  width: 40px; height: 40px; border-radius: 11px; background: var(--surface);
-  display: grid; place-items: center; font-weight: 600; font-size: 16px; color: var(--muted);
+  width: calc(var(--tile-icon) * 1.7); height: calc(var(--tile-icon) * 1.7);
+  border-radius: var(--r-md); background: var(--s-2);
+  display: grid; place-items: center; font-weight: 600; font-size: var(--fs-lg); color: var(--muted);
+  box-shadow: var(--depth-rest);
 }
-.hicon img { width: 24px; height: 24px; object-fit: contain; }
+.hicon img { width: var(--tile-icon); height: var(--tile-icon); object-fit: contain; }
 .hmain { min-width: 0; }
 .hline1 { display: flex; align-items: center; gap: 10px; }
-.hname { font-weight: 600; }
+.hname { font-weight: 600; font-size: var(--fs-md); }
 .hmeta {
-  display: flex; flex-wrap: wrap; gap: 4px 14px;
-  color: var(--muted); font-size: 12.5px; margin-top: 4px;
+  display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-4);
+  color: var(--muted); font-size: var(--fs-sm); margin-top: var(--sp-1);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 .hist-legend {
@@ -265,51 +385,54 @@ body {
 .hist-legend .hd { display: inline-block; }
 
 .hhist { display: flex; gap: 3px; margin-top: 8px; }
-.hd { width: 8px; height: 8px; border-radius: 2px; background: var(--muted); }
-.hd-healthy { background: var(--dot-ok); }
-.hd-unhealthy { background: var(--dot-warn); }
-.hd-crashed, .hd-failed { background: var(--dot-bad); }
+.hd { width: 10px; height: 10px; border-radius: 3px; background: var(--muted); }
+.hd-healthy { background: var(--ok); }
+.hd-unhealthy { background: var(--warn); }
+.hd-crashed, .hd-failed { background: var(--bad); }
 .hd-starting { background: var(--muted); }
 
 .badge {
-  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
-  padding: 2px 8px; border-radius: 6px;
+  font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 3px var(--sp-2); border-radius: var(--r-sm);
 }
-.b-healthy { background: rgba(55, 201, 138, 0.16); color: var(--dot-ok); }
-.b-unhealthy { background: rgba(230, 171, 75, 0.18); color: var(--dot-warn); }
-.b-starting { background: rgba(138, 148, 168, 0.18); color: var(--muted); }
-.b-crashed, .b-failed, .b-unknown { background: rgba(240, 101, 95, 0.16); color: var(--dot-bad); }
+.b-healthy { background: var(--ok-bg); color: var(--ok); }
+.b-unhealthy { background: var(--warn-bg); color: var(--warn); }
+.b-starting { background: var(--neutral-bg); color: var(--muted); }
+.b-crashed, .b-failed, .b-unknown { background: var(--bad-bg); color: var(--bad); }
 
-.hactions { display: flex; gap: 6px; align-self: start; }
+.hactions { display: flex; gap: var(--sp-2); align-self: start; }
 .mini {
-  padding: 5px 11px; border: 1px solid var(--border); border-radius: 8px;
-  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  padding: var(--sp-2) var(--sp-3); border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--s-2); color: var(--muted); font-size: var(--fs-sm); cursor: pointer;
+  box-shadow: var(--depth-rest);
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
 }
-.mini:hover { color: var(--text); border-color: var(--muted); background: var(--surface); }
+.mini:hover { color: var(--text); border-color: var(--s-3); background: var(--s-3); box-shadow: var(--depth-raised); }
 .hlogs {
   grid-column: 1 / -1;
   margin: 10px 0 0; max-height: 200px; overflow: auto;
-  background: #0b0e15; border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 12px; color: #c3cbdc; font-size: 12px; white-space: pre-wrap;
+  background: var(--s-sunken); border: 1px solid var(--border); border-radius: 8px;
+  padding: var(--sp-3); color: var(--text); font-size: var(--fs-sm);
+  font-family: var(--font-mono); white-space: pre-wrap;
 }
 
-.empty { color: var(--text); font-size: 16px; }
+.empty { color: var(--text); font-size: var(--fs-lg); }
 .empty p { margin: 0; }
 .empty .muted { color: var(--muted); font-size: 14px; }
 
-.status-pane h2 { margin: 0; font-size: 18px; color: var(--text); }
+.status-pane h2 { margin: 0; font-size: var(--fs-xl); color: var(--text); }
 .status-pane .sub { color: var(--muted); max-width: 520px; }
 .status-pane pre {
   max-width: 720px;
   max-height: 40vh;
   overflow: auto;
   text-align: left;
-  background: #0b0e15;
+  background: var(--s-sunken);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px;
-  color: #c3cbdc;
+  color: var(--text);
   font-size: 12px;
   width: 100%;
 }
@@ -319,11 +442,13 @@ body {
   background: var(--accent);
   color: #fff;
   border: 0;
-  border-radius: 9px;
-  padding: 9px 16px;
-  font-size: 14px;
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-5);
+  font-size: var(--fs-md);
+  font-family: inherit;
   cursor: pointer;
-  transition: filter 0.15s ease, background 0.15s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), var(--elev-contact);
+  transition: filter var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
 }
 .btn:hover { filter: brightness(1.08); }
 .btn:disabled { opacity: 0.6; cursor: default; }
@@ -340,12 +465,12 @@ body {
   left: 50%;
   bottom: 26px;
   transform: translateX(-50%) translateY(8px);
-  background: var(--surface-hi);
+  background: var(--s-3);
   color: var(--text);
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  box-shadow: var(--shadow);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: var(--fs-md);
+  box-shadow: var(--depth-rest), var(--elev-overlay);
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
   z-index: 50;

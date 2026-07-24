@@ -11,7 +11,10 @@ import { readManifest } from './manifest.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SHELL_ROOT = path.resolve(__dirname, '..');
 const REPO_ROOT = path.resolve(SHELL_ROOT, '..');
-const DATA_DIR = path.join(SHELL_ROOT, 'data');
+// Overridable so a test run gets a throwaway registry instead of the real one.
+const DATA_DIR = process.env.SHELL_DATA_DIR
+  ? path.resolve(process.env.SHELL_DATA_DIR)
+  : path.join(SHELL_ROOT, 'data');
 const APPS_DIR = path.join(DATA_DIR, 'apps');
 const APP_DATA_ROOT = path.join(DATA_DIR, 'app-data');
 const REGISTRY_FILE = path.join(DATA_DIR, 'registry.json');
@@ -124,6 +127,18 @@ app.post('/shell/tabs', async (req, res) => {
     res.json({ ok: true, app: { id: manifest.id, name: manifest.name } });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Persist the rail's tile order after a drag.
+app.post('/shell/reorder', async (req, res) => {
+  const { ids } = req.body ?? {};
+  if (!Array.isArray(ids)) return res.status(400).json({ error: 'ids must be an array.' });
+  try {
+    await registry.reorder(ids);
+    res.json({ ok: true, order: registry.list().map((a) => a.id) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
