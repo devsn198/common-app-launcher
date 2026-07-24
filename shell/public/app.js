@@ -42,7 +42,7 @@ function toast(message) {
   }, 1900);
 }
 
-// ── The launcher gem ───────────────────────────────────────────────────────
+// ── The App Rail gem ───────────────────────────────────────────────────────
 // It only breathes while the Store is open. Stopping it needs help: dropping a
 // CSS animation snaps the element straight back to its base value — the browser
 // does not transition out of an animation. So the live frame is pinned as an
@@ -496,7 +496,7 @@ async function renderSettings() {
       </div>
       <div class="health-list">${list.map(healthRow).join('') || '<p class="empty-row">No apps.</p>'}</div>
       <h2 class="sec-label about-label">About</h2>
-      <p class="about-line">Common App Launcher · v0.1.0</p>
+      <p class="about-line">App Rail · v0.1.0</p>
     </div>`;
   settingsPane.querySelectorAll('[data-action]').forEach((btn) =>
     btn.addEventListener('click', () => onHealthAction(btn.dataset.action, btn.dataset.id)));

@@ -1,4 +1,4 @@
-# Common App Launcher
+# App Rail
 
 A single **launcher** that runs each of your apps as its own background process and shows
 each one as a **tab** in one browser window. Every app is just a small web server that
@@ -14,7 +14,7 @@ backend, follow the Contract, and get a usable, tabbed home for all your apps fo
 
 ```
 Browser ──► Shell (Node/Express, port 4000)
-             • serves the launcher UI (left rail + content area)
+             • serves the App Rail UI (left rail + content area)
              • GET  /shell/apps            list installed apps + live status
              • POST /shell/install         clone a git URL → install → spawn → register
              • proxy /apps/<id>/* ────────► that app's subprocess (its own port)
@@ -115,7 +115,7 @@ Usually three small steps, no rewrite:
 ```
 shell/
   src/          server.js (entry), supervisor, installer, manifest, registry, ports
-  public/       the launcher UI (index.html, app.js, style.css)
+  public/       the App Rail UI (index.html, app.js, style.css)
   data/         runtime state (git-ignored): registry.json, apps/, app-data/
 examples/       reference apps (store, hello-world, clock, manifest-maker)
 docs/           design spec

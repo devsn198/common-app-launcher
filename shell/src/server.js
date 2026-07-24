@@ -183,7 +183,7 @@ app.get('/shell/logs/:id', (req, res) => {
   res.type('text/plain').send(supervisor.getStderr(req.params.id) || '(no output captured)');
 });
 
-// --- Launcher UI (served last so it doesn't shadow /apps or /shell) ---------
+// --- App Rail UI (served last so it doesn't shadow /apps or /shell) ---------
 app.use(express.static(PUBLIC_DIR));
 
 function recordFrom(manifest, appDir) {
@@ -231,7 +231,7 @@ async function main() {
   await seedStoreIfMissing();
 
   app.listen(PORT, async () => {
-    console.log(`\n  Common App Shell running at ${SHELL_URL}\n`);
+    console.log(`\n  App Rail Shell running at ${SHELL_URL}\n`);
     console.log('Booting registered apps:');
     await bootRegisteredApps();
     supervisor.startMonitor(); // begin continuous health checks

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Store</title>
-    <!-- The launcher's design system. Apps are proxied onto the Shell's origin,
+    <!-- App Rail's design system. Apps are proxied onto the Shell's origin,
          so this absolute path resolves even from inside the iframe. Adopting it
          is how an app inherits the look instead of copying the palette. -->
     <link rel="stylesheet" href="/theme.css" />
@@ -383,7 +383,7 @@
           if (!manifest) {
             return notice(
               `${c.label} has no app.manifest.json${c.subpath ? ` in ${c.subpath}` : ''}, ` +
-              `so it was not built for this launcher and cannot be imported. ` +
+              `so it was not built for App Rail and cannot be imported. ` +
               `Fork it and add a manifest to run it here.`, 'err');
           }
           if (!manifest.id || !manifest.start || !manifest.healthCheck) {

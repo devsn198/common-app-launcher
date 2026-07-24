@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Common App Launcher — design tokens
+   App Rail — design tokens
    "Precision instrument": quiet, dark, physical. Depth comes from LIGHT, never
    from shadow — on a #10141d surface there is no luminance left to darken.
 
-   This file is the SINGLE source of truth for the launcher's look. The Shell
+   This file is the SINGLE source of truth for App Rail's look. The Shell
    serves it statically, and because apps are proxied onto the Shell's origin
    (an iframe at /apps/<id>/ is still localhost:4000) any app can adopt the whole
    system with one line:
@@ -105,7 +105,7 @@
 
   /* ── Rail geometry ─────────────────────────────────────────────────────
      The "Comfortable" density step. Everything in the rail derives from these
-     four numbers, so the launcher rescales from one place instead of having
+     four numbers, so App Rail rescales from one place instead of having
      sizes sprinkled through the stylesheet. */
   --rail-w: 80px;
   --tile: 52px;

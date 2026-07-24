@@ -26,7 +26,7 @@ const page = `<!doctype html>
     <style>
       body { font: var(--fs-lg) var(--font-ui); display: grid; place-content: center; height: 100vh;
              margin: 0; background: var(--s-0); color: var(--text); text-align: center; }
-      /* Raised the same way the launcher's tiles are: rim light + ambient. */
+      /* Raised the same way App Rail's tiles are: rim light + ambient. */
       .card { background: var(--s-1); padding: var(--sp-6) 56px; border-radius: var(--r-lg);
               border: 1px solid var(--line);
               box-shadow: var(--depth-rest), var(--elev-ambient); }
