@@ -107,6 +107,9 @@ body {
 /* Off in the Store, hovering the mark still acknowledges the press target —
    a still lift and a faint bloom, no cycling. */
 .logo:hover img {
+  /* Fast in — the long duration on .logo img exists for the settle *out* of the
+     animation, and a hover that took 0.75s to arrive felt unresponsive. */
+  transition-duration: 0.18s;
   transform: scale(1.06) translateY(-1px);
   filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.5))
           drop-shadow(0 0 9px rgba(120, 165, 255, 0.45));

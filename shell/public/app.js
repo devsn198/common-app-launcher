@@ -52,10 +52,38 @@ const gemImg = logo.querySelector('img');
 const gemHalo = logo.querySelector('.gem-halo');
 const gemParts = [gemImg, gemHalo];
 
+const gemScale = () => {
+  const m = getComputedStyle(gemImg).transform;
+  const n = m && m !== 'none' && m.match(/matrix\(\s*([-\d.]+)/);
+  return n ? parseFloat(n[1]) : 1;
+};
+
+// Find the point in the cycle whose scale equals `target`. Scale climbs
+// monotonically across the first half of the cycle (trough → peak), so a
+// bisection over that half converges — and it reads the real animation rather
+// than duplicating the keyframe maths here, which would rot the moment the
+// values in style.css change.
+function phaseMatchingScale(anims, target) {
+  const duration = anims[0].effect.getTiming().duration;
+  let lo = 0;
+  let hi = duration / 2;
+  for (let i = 0; i < 12; i++) {
+    const mid = (lo + hi) / 2;
+    anims.forEach((a) => { a.currentTime = mid; });
+    if (gemScale() < target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 function setGem(active) {
   if (active === logo.classList.contains('active')) return; // no-op on every poll
 
   if (active) {
+    // Whatever the mark is showing right now — hovered, still settling from a
+    // previous exit, or at rest — is where the animation has to pick up from.
+    const from = gemScale();
+
     for (const el of gemParts) {
       el.style.transition = 'none';
       el.style.transform = el.style.filter = el.style.opacity = '';
@@ -63,6 +91,15 @@ function setGem(active) {
     void logo.offsetWidth;                       // commit before the keyframes start
     for (const el of gemParts) el.style.transition = '';
     logo.classList.add('active');
+
+    // Starting at 0% would snap the mark down from the hover scale to the
+    // keyframe's trough. Seek to the phase whose scale already matches.
+    const anims = logo.getAnimations({ subtree: true });
+    if (anims.length) {
+      anims.forEach((a) => a.pause());
+      const at = phaseMatchingScale(anims, from);
+      anims.forEach((a) => { a.currentTime = at; a.play(); });
+    }
     return;
   }
 
