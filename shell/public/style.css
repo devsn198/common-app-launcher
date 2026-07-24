@@ -50,36 +50,66 @@ body {
   color: var(--accent);
   cursor: pointer;
 }
-/* A floating gem: it breathes slowly and its glow swells with it, so the mark
-   reads as a lit object suspended in the rail rather than a printed icon. */
+/* A floating gem. Enough motion to notice at the edge of vision, not enough to
+   pull the eye away from the app you are actually using — roughly half the
+   swing of a full "pulse", on a slow cycle. */
+.logo { position: relative; }
 .logo img {
+  position: relative;
+  z-index: 1;
   display: block;
-  animation: gem-float 6s ease-in-out infinite;
+  width: calc(var(--tile-icon) * 1.25);
+  height: calc(var(--tile-icon) * 1.25);
+  animation: gem-float 5.4s ease-in-out infinite;
   will-change: transform, filter;
 }
 @keyframes gem-float {
   0%, 100% {
-    transform: scale(1) translateY(0);
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55))
-            drop-shadow(0 0 5px rgba(91, 140, 255, 0.28));
+    transform: scale(0.975) translateY(1.5px);
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55))
+            drop-shadow(0 0 4px rgba(91, 140, 255, 0.22));
   }
   50% {
-    transform: scale(1.055) translateY(-1px);
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5))
-            drop-shadow(0 0 13px rgba(120, 165, 255, 0.62));
+    transform: scale(1.075) translateY(-2.5px);
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 10px rgba(140, 180, 255, 0.55))
+            drop-shadow(0 0 22px rgba(91, 140, 255, 0.3));
   }
 }
-.logo:hover img { animation-duration: 3s; }
-/* In the Store the gem holds a brighter, steady bloom. */
-.logo.active img {
-  animation-duration: 4s;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5))
-          drop-shadow(0 0 9px rgba(120, 165, 255, 0.8))
-          drop-shadow(0 0 20px rgba(91, 140, 255, 0.45));
+
+/* A separate halo, because a drop-shadow alone stays tight to the silhouette
+   and is easy to miss against the rail. */
+.logo::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--tile) * 1.5);
+  height: calc(var(--tile) * 1.5);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(91, 140, 255, 0.30) 0%, rgba(91, 140, 255, 0.09) 42%, transparent 68%);
+  transform: translate(-50%, -50%) scale(0.75);
+  opacity: 0.16;
+  pointer-events: none;
+  animation: gem-halo 5.4s ease-in-out infinite;
+}
+@keyframes gem-halo {
+  0%, 100% { opacity: 0.14; transform: translate(-50%, -50%) scale(0.75); }
+  50%      { opacity: 0.55; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+.logo:hover img, .logo:hover::after { animation-duration: 3.2s; }
+
+/* In the Store the gem sits a little brighter. */
+.logo.active img { animation-duration: 4.6s; }
+.logo.active::after {
+  background: radial-gradient(circle, rgba(120, 165, 255, 0.42) 0%, rgba(91, 140, 255, 0.14) 45%, transparent 70%);
+  animation-duration: 4.6s;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .logo img { animation: none; }
+  .logo::after { animation: none; opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* Scrollable tile column. Extra bottom padding clears the floating footer so the
@@ -252,11 +282,23 @@ body {
   transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease),
               box-shadow var(--dur-1) var(--ease);
 }
-.settings svg { width: calc(var(--tile-icon) * 0.86); height: calc(var(--tile-icon) * 0.86); }
-.settings:hover { background: var(--s-2); color: var(--text); box-shadow: var(--depth-rest); }
-.settings.active { background: var(--s-3); color: var(--accent); box-shadow: var(--depth-raised); }
-.settings svg { transition: transform 0.4s ease; }
-.settings:hover svg { transform: rotate(40deg); }
+.settings img {
+  display: block;
+  width: calc(var(--tile-icon) * 0.95);
+  height: calc(var(--tile-icon) * 0.95);
+  opacity: 0.72;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+  transition: transform 0.45s var(--ease), opacity var(--dur-1) var(--ease), filter var(--dur-1) var(--ease);
+}
+.settings:hover { background: var(--s-2); box-shadow: var(--depth-rest); }
+.settings:hover img { transform: rotate(40deg); opacity: 1; }
+.settings.active { background: var(--s-3); box-shadow: var(--depth-raised); }
+/* Active: the gear catches the accent, matching how a selected tile is lit. */
+.settings.active img {
+  opacity: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 7px rgba(91, 140, 255, 0.75));
+}
 
 /* ── Stage (app content) ──────────────────────────────────────────────── */
 #stage {
