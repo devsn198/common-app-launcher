@@ -183,7 +183,7 @@ app.get('/shell/logs/:id', (req, res) => {
   res.type('text/plain').send(supervisor.getStderr(req.params.id) || '(no output captured)');
 });
 
-// --- Launcher UI (served last so it doesn't shadow /apps or /shell) ---------
+// --- App Rail UI (served last so it doesn't shadow /apps or /shell) ---------
 app.use(express.static(PUBLIC_DIR));
 
 function recordFrom(manifest, appDir) {
@@ -201,13 +201,13 @@ function recordFrom(manifest, appDir) {
 
 async function seedStoreIfMissing() {
   if (registry.has('store')) return;
-  const storeSrc = path.join(REPO_ROOT, 'examples', 'store');
+  const storeSrc = path.join(REPO_ROOT, 'store');
   try {
     const manifest = await readManifest(storeSrc);
     // Run the Store's install step (idempotent) so it can boot.
     // The Store has no deps in the MVP, but keep the flow uniform.
     await registry.add(recordFrom(manifest, storeSrc));
-    console.log('Seeded Store from examples/store.');
+    console.log('Seeded Store from store/.');
   } catch (err) {
     console.warn(`Could not seed Store: ${err.message}`);
   }
@@ -231,7 +231,7 @@ async function main() {
   await seedStoreIfMissing();
 
   app.listen(PORT, async () => {
-    console.log(`\n  Common App Shell running at ${SHELL_URL}\n`);
+    console.log(`\n  App Rail Shell running at ${SHELL_URL}\n`);
     console.log('Booting registered apps:');
     await bootRegisteredApps();
     supervisor.startMonitor(); // begin continuous health checks

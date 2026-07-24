@@ -1,6 +1,6 @@
 // Minimal assertion + runner harness for the in-browser suites.
 //
-// These run inside the live launcher page (the shell serves this directory), so
+// These run inside the live App Rail page (the shell serves this directory), so
 // they drive the real DOM the way a user does — no jsdom, no Playwright, and no
 // browser download. The runner returns a compact summary: on success it is two
 // numbers, which is the whole point of running the suite in one call.

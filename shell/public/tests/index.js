@@ -1,6 +1,6 @@
 // Entry point for the in-browser suites.
 //
-// Run the whole thing from the launcher page with a single call:
+// Run the whole thing from the App Rail page with a single call:
 //   const { run } = await import('/tests/index.js?v=' + Date.now());
 //   return JSON.stringify(await run());
 //

@@ -1,4 +1,4 @@
-# Common App Launcher
+# App Rail
 
 A single **launcher** that runs each of your apps as its own background process and shows
 each one as a **tab** in one browser window. Every app is just a small web server that
@@ -14,7 +14,7 @@ backend, follow the Contract, and get a usable, tabbed home for all your apps fo
 
 ```
 Browser ──► Shell (Node/Express, port 4000)
-             • serves the launcher UI (left rail + content area)
+             • serves the App Rail UI (left rail + content area)
              • GET  /shell/apps            list installed apps + live status
              • POST /shell/install         clone a git URL → install → spawn → register
              • proxy /apps/<id>/* ────────► that app's subprocess (its own port)
@@ -93,14 +93,17 @@ process and only its tab shows "crashed" (with a Restart button) — the others 
 
 ## Example apps
 
-Reference apps live in [`examples/`](examples/), each following the Contract:
+Each reference app now lives in its own repo, installable straight from the Store:
 
-- **[store](examples/store/)** — the built-in Store (GitHub search + URL import). The reference
-  app that proves the Contract using only Shell endpoints.
-- **[hello-world](examples/hello-world/)** — the minimal app: a manifest + a tiny server.
-- **[clock](examples/clock/)** — a live clock.
-- **[manifest-maker](examples/manifest-maker/)** — a form that generates an `app.manifest.json`
-  for a new app, with live preview, copy, and download.
+- **[hello-world](https://github.com/devsn198/hello-world)** — the minimal app: a manifest and a
+  tiny server.
+- **[clock](https://github.com/devsn198/clock)** — a live clock.
+- **[manifest-maker](https://github.com/devsn198/manifest-maker)** — a form that generates an
+  `app.manifest.json` for a new app, with live preview, copy, and download.
+
+The **Store** itself is the exception: it ships in this repo at [`store/`](store/) because the
+Shell seeds it on first run. It's the app that installs the others, so it can't be one of the
+things you install. It follows the Contract like any other app, using only Shell endpoints.
 
 ## Retrofitting an existing app
 
@@ -115,9 +118,10 @@ Usually three small steps, no rewrite:
 ```
 shell/
   src/          server.js (entry), supervisor, installer, manifest, registry, ports
-  public/       the launcher UI (index.html, app.js, style.css)
+  public/       the App Rail UI (index.html, app.js, style.css)
   data/         runtime state (git-ignored): registry.json, apps/, app-data/
-examples/       reference apps (store, hello-world, clock, manifest-maker)
+store/          the built-in Store, seeded into the rail on first run
+tests/          node:test suites + fixtures/ (throwaway apps the API tests spawn)
 docs/           design spec
 ```
 

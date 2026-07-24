@@ -1,8 +1,8 @@
-# Common App Framework — Shell + Contract Design Spec
+# App Rail — Shell + Contract Design Spec
 
 **Date:** 2026-07-05
 **Status:** Approved design (Phase 1 of 3)
-**Scope:** The Shell (launcher) + the Contract (app plugin rulebook). The Store is built as the
+**Scope:** The Shell + the Contract (app plugin rulebook). The Store is built as the
 reference app that validates the Contract. The GitHub-driven store *features* beyond this reference
 implementation are a future phase.
 
@@ -10,7 +10,7 @@ implementation are a future phase.
 
 ## 1. Problem & Goal
 
-Rebuilding a frontend for every personal project is wasteful. The goal is a single **launcher/shell**
+Rebuilding a frontend for every personal project is wasteful. The goal is a single **shell**
 that hosts each of the user's apps as a tab, where each app supplies only backend logic and gets a
 usable UI "for free." A **Mini Store** — itself the first tab — lets the user pull an app's repo from
 GitHub, install its dependencies, and register it as a new tab, so future apps require writing backend
@@ -25,7 +25,7 @@ covers the Shell + Contract, with the Store built as the reference app that prov
                           ┌─────────────────────────────────────┐
         Browser  ◄──────► │              SHELL (Node/TS)          │
      (single web UI)      │                                       │
-                          │  • Serves launcher UI (tab chrome)    │
+                          │  • Serves App Rail UI (tab chrome)    │
                           │  • Tab bar + tab lifecycle            │
                           │  • Subprocess supervisor              │
                           │  • Proxy: /apps/<id>/* → subprocess   │
@@ -114,7 +114,7 @@ When the Shell spawns an app it injects environment variables:
 
 ### 3.5 Shared theme (optional affordance)
 
-> Added 2026-07-23. Design decision: one source of truth for the launcher's look.
+> Added 2026-07-23. Design decision: one source of truth for App Rail's look.
 
 The Shell serves its design tokens at **`GET /theme.css`**. Because apps are reverse-proxied onto the
 Shell's own origin — an iframe at `/apps/<id>/` is still `localhost:4000` — an app adopts the entire
