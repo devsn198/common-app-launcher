@@ -27,7 +27,10 @@ const registry = new Registry(REGISTRY_FILE);
 const supervisor = new Supervisor({ shellUrl: SHELL_URL, appDataRoot: APP_DATA_ROOT });
 
 const app = express();
-app.use(express.json());
+// Scoped to the Shell's own API on purpose. Mounted globally this parser also
+// consumes the body of JSON requests bound for an app — the request reaches the
+// proxy with its stream already drained, and the app receives an empty body.
+app.use('/shell', express.json());
 
 // --- Proxy: /apps/<id>/* → that app's subprocess ---------------------------
 // The router picks the live target from the supervisor's port map per request.

@@ -1,0 +1,11 @@
+{
+  "id": "json-echo",
+  "name": "JSON Echo",
+  "logo": "logo.svg",
+  "description": "Test fixture: echoes a JSON request body back. Used to prove the Shell does not swallow bodies bound for an app.",
+  "version": "1.0.0",
+  "install": "true",
+  "start": "node server.js",
+  "port": "$PORT",
+  "healthCheck": "/health"
+}
