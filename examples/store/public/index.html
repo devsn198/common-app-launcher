@@ -98,6 +98,8 @@
       .note { color: var(--muted); font-size: var(--fs-md); padding: var(--sp-1) 2px; }
       .note.err { color: var(--bad); }
       .note.ok { color: var(--ok); }
+      .req { color: var(--muted); font-size: var(--fs-sm); margin: var(--sp-3) 2px 0; max-width: 860px; }
+      .req code { font-family: var(--font-mono); color: var(--text); font-size: 0.94em; }
     </style>
   </head>
   <body>
@@ -108,6 +110,10 @@
         <input id="user" placeholder="GitHub account or repo URL" autocomplete="off" spellcheck="false" />
         <button type="submit">Go</button>
       </form>
+      <p class="req">
+        Apps must ship an <code>app.manifest.json</code> at the repo root — or in the linked
+        subfolder. Repos without one cannot run here.
+      </p>
 
       <section id="availSec" hidden>
         <div class="shead">
@@ -199,9 +205,9 @@
             if ((segs[2] === 'tree' || segs[2] === 'blob') && segs.length > 4) {
               const branch = segs[3];
               const subpath = segs.slice(4).join('/');
-              return { type: 'repo', url, branch, subpath, label: `${user}/${repo}/${subpath}` };
+              return { type: 'repo', url, branch, subpath, owner: user, repo, label: `${user}/${repo}/${subpath}` };
             }
-            return { type: 'repo', url, label: `${user}/${repo}` };
+            return { type: 'repo', url, owner: user, repo, label: `${user}/${repo}` };
           }
           if (user) return { type: 'account', user };
           return null;
@@ -267,9 +273,10 @@
       // Detect app.manifest.json via raw (not counted against the API rate limit).
       // `no-cache` revalidates rather than trusting the HTTP cache: a transient 4xx/5xx
       // from a previous scan would otherwise stick around and hide the app.
-      async function fetchManifest(user, repo, branch) {
+      async function fetchManifest(user, repo, branch, subpath) {
+        const file = `${subpath ? subpath.replace(/^\/+|\/+$/g, '') + '/' : ''}app.manifest.json`;
         try {
-          const res = await fetch(`https://raw.githubusercontent.com/${user}/${repo}/${branch}/app.manifest.json`, { cache: 'no-cache' });
+          const res = await fetch(`https://raw.githubusercontent.com/${user}/${repo}/${branch || 'HEAD'}/${file}`, { cache: 'no-cache' });
           if (!res.ok) return null;
           return await res.json();
         } catch { return null; }
@@ -366,6 +373,26 @@
       // Add a single repo directly by its URL (or local path). `c` may carry a
       // subpath/branch for monorepo subfolder installs.
       async function importDirect(c) {
+        // Pre-flight: a repo without a manifest can never run here, and the
+        // server would only discover that after a full clone. Probing the raw
+        // file first costs one request and no rate limit, so refuse up front
+        // rather than making the user wait to be told no.
+        if (c.owner && c.repo) {
+          notice(`Checking ${c.label} for an app.manifest.json…`);
+          const manifest = await fetchManifest(c.owner, c.repo, c.branch, c.subpath);
+          if (!manifest) {
+            return notice(
+              `${c.label} has no app.manifest.json${c.subpath ? ` in ${c.subpath}` : ''}, ` +
+              `so it was not built for this launcher and cannot be imported. ` +
+              `Fork it and add a manifest to run it here.`, 'err');
+          }
+          if (!manifest.id || !manifest.start || !manifest.healthCheck) {
+            return notice(
+              `${c.label} has an app.manifest.json, but it is missing required fields ` +
+              `(needs at least id, start and healthCheck).`, 'err');
+          }
+        }
+
         notice(`Adding ${c.label}…`);
         try {
           const res = await fetch('/shell/install', {
