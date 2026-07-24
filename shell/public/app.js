@@ -42,6 +42,51 @@ function toast(message) {
   }, 1900);
 }
 
+// ── The launcher gem ───────────────────────────────────────────────────────
+// It only breathes while the Store is open. Stopping it needs help: dropping a
+// CSS animation snaps the element straight back to its base value — the browser
+// does not transition out of an animation. So the live frame is pinned as an
+// inline style first, the animation is removed, and only then are the inline
+// values cleared, which the CSS transition can carry home smoothly.
+const gemImg = logo.querySelector('img');
+const gemHalo = logo.querySelector('.gem-halo');
+const gemParts = [gemImg, gemHalo];
+
+function setGem(active) {
+  if (active === logo.classList.contains('active')) return; // no-op on every poll
+
+  if (active) {
+    for (const el of gemParts) {
+      el.style.transition = 'none';
+      el.style.transform = el.style.filter = el.style.opacity = '';
+    }
+    void logo.offsetWidth;                       // commit before the keyframes start
+    for (const el of gemParts) el.style.transition = '';
+    logo.classList.add('active');
+    return;
+  }
+
+  // Pin whatever frame the animation is currently showing…
+  const frozen = gemParts.map((el) => {
+    const cs = getComputedStyle(el);
+    return { el, transform: cs.transform, filter: cs.filter, opacity: cs.opacity };
+  });
+  for (const f of frozen) {
+    f.el.style.transition = 'none';
+    f.el.style.transform = f.transform;
+    f.el.style.filter = f.filter;
+    f.el.style.opacity = f.opacity;
+  }
+  void logo.offsetWidth;
+  logo.classList.remove('active');               // …stop the keyframes…
+  for (const el of gemParts) el.style.transition = '';
+  requestAnimationFrame(() => {                  // …then release, so the transition runs
+    for (const el of gemParts) {
+      el.style.transform = el.style.filter = el.style.opacity = '';
+    }
+  });
+}
+
 function renderTabs() {
   if (railLocked) return; // never rebuild the rail out from under a live drag
   const scroll = tablistEl.scrollTop; // preserve scroll across the 2s poll re-render
@@ -94,7 +139,7 @@ function renderTabs() {
   tablistEl.appendChild(add);
 
   tablistEl.scrollTop = scroll;
-  logo.classList.toggle('active', !settingsOpen && activeId === STORE_ID);
+  setGem(!settingsOpen && activeId === STORE_ID);
   settingsBtn.classList.toggle('active', settingsOpen);
 }
 

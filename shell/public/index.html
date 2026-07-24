@@ -11,6 +11,9 @@
   <body>
     <aside id="rail" aria-label="App rail">
       <button id="logo" class="logo" title="Store" aria-label="Open the Store">
+        <!-- A real element rather than ::after, so its exact frame can be pinned
+             when the animation is stopped (see setGem in app.js). -->
+        <span class="gem-halo" aria-hidden="true"></span>
         <img src="/mark.svg" alt="" width="26" height="26" aria-hidden="true" />
       </button>
 
