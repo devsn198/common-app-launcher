@@ -50,9 +50,12 @@ body {
   color: var(--accent);
   cursor: pointer;
 }
-/* A floating gem. Enough motion to notice at the edge of vision, not enough to
-   pull the eye away from the app you are actually using — roughly half the
-   swing of a full "pulse", on a slow cycle. */
+/* A floating gem — but only while the Store is open. Everywhere else the mark
+   is a still object, so a perpetual glow never competes with the app the user
+   is actually working in.
+   The resting state carries the transition. When `.active` is dropped the
+   animation is removed, and the transition carries the mark from wherever the
+   animation had it back to rest, so it settles instead of snapping. */
 .logo { position: relative; }
 .logo img {
   position: relative;
@@ -60,9 +63,12 @@ body {
   display: block;
   width: calc(var(--tile-icon) * 1.25);
   height: calc(var(--tile-icon) * 1.25);
-  animation: gem-float 5.4s ease-in-out infinite;
+  transform: scale(1) translateY(0);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+  transition: transform 0.75s var(--ease), filter 0.75s var(--ease);
   will-change: transform, filter;
 }
+.logo.active img { animation: gem-float 4.6s ease-in-out infinite; }
 @keyframes gem-float {
   0%, 100% {
     transform: scale(0.975) translateY(1.5px);
@@ -78,38 +84,44 @@ body {
 }
 
 /* A separate halo, because a drop-shadow alone stays tight to the silhouette
-   and is easy to miss against the rail. */
-.logo::after {
-  content: "";
+   and is easy to miss against the rail. Sits at zero until the Store is open. */
+.logo .gem-halo {
   position: absolute;
   left: 50%;
   top: 50%;
   width: calc(var(--tile) * 1.5);
   height: calc(var(--tile) * 1.5);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(91, 140, 255, 0.30) 0%, rgba(91, 140, 255, 0.09) 42%, transparent 68%);
-  transform: translate(-50%, -50%) scale(0.75);
-  opacity: 0.16;
+  background: radial-gradient(circle, rgba(120, 165, 255, 0.42) 0%, rgba(91, 140, 255, 0.14) 45%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0.7);
+  opacity: 0;
   pointer-events: none;
-  animation: gem-halo 5.4s ease-in-out infinite;
+  transition: opacity 0.75s var(--ease), transform 0.75s var(--ease);
 }
+.logo.active .gem-halo { animation: gem-halo 4.6s ease-in-out infinite; }
 @keyframes gem-halo {
   0%, 100% { opacity: 0.14; transform: translate(-50%, -50%) scale(0.75); }
   50%      { opacity: 0.55; transform: translate(-50%, -50%) scale(1.06); }
 }
 
-.logo:hover img, .logo:hover::after { animation-duration: 3.2s; }
-
-/* In the Store the gem sits a little brighter. */
-.logo.active img { animation-duration: 4.6s; }
-.logo.active::after {
-  background: radial-gradient(circle, rgba(120, 165, 255, 0.42) 0%, rgba(91, 140, 255, 0.14) 45%, transparent 70%);
-  animation-duration: 4.6s;
+/* Off in the Store, hovering the mark still acknowledges the press target —
+   a still lift and a faint bloom, no cycling. */
+.logo:hover img {
+  /* Fast in — the long duration on .logo img exists for the settle *out* of the
+     animation, and a hover that took 0.75s to arrive felt unresponsive. */
+  transition-duration: 0.18s;
+  transform: scale(1.06) translateY(-1px);
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 9px rgba(120, 165, 255, 0.45));
 }
+.logo:hover .gem-halo { opacity: 0.3; transform: translate(-50%, -50%) scale(0.95); }
+/* …but while it *is* animating, the hover state must not fight the keyframes. */
+.logo.active:hover img { transform: none; filter: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo img { animation: none; }
-  .logo::after { animation: none; opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  .logo img, .logo.active img { animation: none; }
+  .logo .gem-halo, .logo.active .gem-halo { animation: none; }
+  .logo.active .gem-halo { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* Scrollable tile column. Extra bottom padding clears the floating footer so the

@@ -120,6 +120,26 @@ test('uninstall drops the app but never deletes a source dir it did not clone', 
   await fs.access(path.join(CLOCK_DIR, 'server.js')); // throws if it was deleted
 });
 
+test('a JSON body bound for an app reaches it intact', async () => {
+  // Regression: express.json() was mounted globally, ahead of the proxy, so it
+  // drained the request stream and the app received an empty body.
+  const fixture = path.join(REPO_ROOT, 'tests', 'fixtures', 'json-echo');
+  assert.equal((await post('/shell/tabs', { path: fixture })).status, 200);
+
+  const payload = { hello: 'world', n: 42 };
+  const res = await fetch(base + '/apps/json-echo/echo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  assert.equal(res.status, 200);
+  const seen = await res.json();
+  assert.equal(seen.method, 'POST');
+  assert.deepEqual(JSON.parse(seen.received || '{}'), payload, 'the app saw a different body than was sent');
+
+  await post('/shell/uninstall', { id: 'json-echo' });
+});
+
 test('the removed app stops being proxied', async () => {
   assert.equal((await get('/apps/clock/')).status, 502);
 });

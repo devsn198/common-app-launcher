@@ -5,7 +5,7 @@
 // `--panel`. It rendered correctly only by falling through to the hardcoded
 // fallback — invisible in review, and exactly the failure mode that three
 // copy-pasted palettes produce. A token that stops resolving must fail loudly.
-import { ok, eq, until, sleep } from './harness.js';
+import { ok, eq, until, sleep, realClick } from './harness.js';
 
 // Every token the Shell or a bundled app actually depends on.
 const REQUIRED = [
@@ -29,8 +29,8 @@ const resolve = (doc, name) => getComputedStyle(doc.documentElement).getProperty
 
 async function openApp(id) {
   const tile = [...document.querySelectorAll('#tablist .tab')].find((t) => t.dataset.id === id);
-  if (tile) tile.click();
-  else document.getElementById('logo').click(); // the Store has no rail tile
+  if (tile) realClick(tile);
+  else realClick(document.getElementById('logo')); // the Store has no rail tile
   await until(() => {
     const d = frame().contentDocument;
     return d && d.readyState === 'complete' && d.documentElement ? d : null;
@@ -48,9 +48,9 @@ export default {
   async after({ wasActive }) {
     if (wasActive) {
       const tile = [...document.querySelectorAll('#tablist .tab')].find((t) => t.dataset.id === wasActive);
-      tile?.click();
+      if (tile) realClick(tile);
     } else {
-      document.getElementById('logo').click();
+      realClick(document.getElementById('logo'));
     }
     await sleep(120);
   },
@@ -96,7 +96,7 @@ export default {
 
   'the active tile is raised and rim-lit': async () => {
     const tile = document.querySelector('#tablist .tab');
-    tile.click();
+    realClick(tile);
     await sleep(120);
     const active = document.querySelector('#tablist .tab.active');
     ok(active, 'a tile should be active after clicking it');
