@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CLOCK_DIR = path.join(REPO_ROOT, 'examples', 'clock');
+const CLOCK_DIR = path.join(REPO_ROOT, 'tests', 'fixtures', 'clock');
 
 let shell;      // the spawned Shell process
 let base;       // http://127.0.0.1:<port>

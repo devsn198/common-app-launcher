@@ -201,13 +201,13 @@ function recordFrom(manifest, appDir) {
 
 async function seedStoreIfMissing() {
   if (registry.has('store')) return;
-  const storeSrc = path.join(REPO_ROOT, 'examples', 'store');
+  const storeSrc = path.join(REPO_ROOT, 'store');
   try {
     const manifest = await readManifest(storeSrc);
     // Run the Store's install step (idempotent) so it can boot.
     // The Store has no deps in the MVP, but keep the flow uniform.
     await registry.add(recordFrom(manifest, storeSrc));
-    console.log('Seeded Store from examples/store.');
+    console.log('Seeded Store from store/.');
   } catch (err) {
     console.warn(`Could not seed Store: ${err.message}`);
   }
